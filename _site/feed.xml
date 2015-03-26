@@ -4,7 +4,7 @@
 <generator uri="https://github.com/mojombo/jekyll">Jekyll</generator>
 <link rel="self" type="application/atom+xml" href="/feed.xml" />
 <link rel="alternate" type="text/html" href="" />
-<updated>2015-03-26T13:50:28+00:00</updated>
+<updated>2015-03-26T14:27:28+00:00</updated>
 <id>/</id>
 <author>
   <name>Insomnia</name>
@@ -72,6 +72,8 @@ sudo apt-get install libncurses5-dev&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
 &lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-sh&quot; data-lang=&quot;sh&quot;&gt;make &lt;span class=&quot;nv&quot;&gt;STRIP&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;arm-none-linux-gnueabi-strip &lt;span class=&quot;nv&quot;&gt;INSTALL_MOD_PATH&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;output &lt;span class=&quot;nv&quot;&gt;ARCH&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;arm &lt;span class=&quot;nv&quot;&gt;INSTALL_MOD_STRIP&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;m&quot;&gt;1&lt;/span&gt; modules_install&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
 
 &lt;p&gt;然后把output目录下的modules替换到开发板的/lib/modules下，/arch/arm/boot/uImage替换到开发板/boot目录下，内核就升级完成了，重启即可。&lt;/p&gt;
+
+&lt;p&gt;-EOF-&lt;/p&gt;
 
     &lt;p&gt;&lt;a href=&quot;/install-cubieez-lubuntu-on-cubietruck/&quot;&gt;cubietruck安装Cubieez/Lubuntu笔记&lt;/a&gt; was originally published by Insomnia at &lt;a href=&quot;&quot;&gt;零時寝子&lt;/a&gt; on January 01, 2015.&lt;/p&gt;
   </content>

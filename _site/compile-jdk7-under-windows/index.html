@@ -5,25 +5,25 @@
 <!--[if gt IE 8]><!--> <html class="no-js" lang="en"><!--<![endif]-->
 <head>
 <meta charset="utf-8">
-<title>Latest Posts &#8211; 零時寝子</title>
-<meta name="description" content="Describe this nonsense.">
-<meta name="keywords" content="Jekyll, theme, themes, responsive, blog, modern">
+<title>Windows下编译OpenJDK7 笔记 &#8211; 零時寝子</title>
+<meta name="description" content="Windows下编译OpenJDK7 笔记">
+<meta name="keywords" content="openjdk, compile, windows, make, cygwin">
 
 
 
 <!-- Open Graph -->
 <meta property="og:locale" content="en_US">
 <meta property="og:type" content="article">
-<meta property="og:title" content="Latest Posts">
-<meta property="og:description" content="Describe this nonsense.">
-<meta property="og:url" content="/index.html">
+<meta property="og:title" content="Windows下编译OpenJDK7 笔记">
+<meta property="og:description" content="Windows下编译OpenJDK7 笔记">
+<meta property="og:url" content="/compile-jdk7-under-windows/">
 <meta property="og:site_name" content="零時寝子">
 
 
 
 
 
-<link rel="canonical" href="/">
+<link rel="canonical" href="/compile-jdk7-under-windows/">
 <link href="/feed.xml" type="application/atom+xml" rel="alternate" title="零時寝子 Feed">
 
 <!-- http://t.co/dKP3o1e -->
@@ -59,7 +59,7 @@
 
 </head>
 
-<body id="post-index" class="feature">
+<body id="post" >
 
 <!--[if lt IE 9]><div class="upgrade"><strong><a href="http://whatbrowser.org/">Your browser is quite old!</strong> Why not upgrade to a different browser to better enjoy this site?</a></div><![endif]-->
 <nav id="dl-menu" class="dl-menuwrapper" role="navigation">
@@ -113,236 +113,27 @@
 </nav><!-- /.dl-menuwrapper -->
 
 
-<div class="entry-header">
-  <div class="image-credit">Image source: <a href="http://www.dargadgetz.com/ios-7-abstract-wallpaper-pack-for-iphone-5-and-ipod-touch-retina/">dargadgetz</a></div><!-- /.image-credit -->
-  
-    <div class="entry-image">
-      <img src="/images/abstract-1.jpg" alt="Latest Posts">
-    </div><!-- /.entry-image -->
-  
-  <div class="header-title">
-    <div class="header-title-wrap">
-      <h1>零時寝子</h1>
-      <h2>Latest Posts</h2>
-    </div><!-- /.header-title-wrap -->
-  </div><!-- /.header-title -->
-</div><!-- /.entry-header -->
+
 
 <div id="main" role="main">
-  
-<article class="hentry">
-  <header>
-    
-    <div class="entry-meta">
-      <span class="entry-date date published updated"><time datetime="2015-01-01T00:00:00+00:00"><a href="/install-cubieez-lubuntu-on-cubietruck/">January 01, 2015</a></time></span><span class="author vcard"><span class="fn"><a href="/about/" title="About Insomnia">Insomnia</a></span></span>
-      
-      <span class="entry-reading-time">
-        <i class="fa fa-clock-o"></i>
+  <article class="hentry">
+    <header class="header-title">
+      <div class="header-title-wrap">
         
-        Reading time ~1 minute
-      </span><!-- /.entry-reading-time -->
-      
-    </div><!-- /.entry-meta -->
-    
-      <h1 class="entry-title"><a href="/install-cubieez-lubuntu-on-cubietruck/" rel="bookmark" title="cubietruck安装Cubieez/Lubuntu笔记" itemprop="url">cubietruck安装Cubieez/Lubuntu笔记</a></h1>
-    
-  </header>
-  <div class="entry-content">
-    <p>工具：</p>
-
-<div class="highlight"><pre><code class="language-sh" data-lang="sh">PhoneixSuite<span class="o">(</span>Windows<span class="o">)</span>
-SecureCRT</code></pre></div>
-
-<p>固件下载链接：</p>
-
-<div class="highlight"><pre><code class="language-sh" data-lang="sh">http://dl.cubieboard.org/software/a20-cubietruck/</code></pre></div>
-
-<p>按照需求下载对应的固件，解压后使用PhoneixSuite刷入cubietruck即可。</p>
-
-<p>罗技无线键鼠没法使用的解决办法：</p>
-
-<p>因为内核中的驱动支持HIDRAW默认是关闭的，重新编译一次内核即可。</p>
-
-<p>烧录好的系统，ssh登录进去，到/proc/目录下找到config.gz，是当前内核的配置文件，拷贝出来到内核源码目录，解压重命名为.config。这么做是为了最大兼容当前运行内核。</p>
-
-<p>内核源码的github地址：</p>
-
-<div class="highlight"><pre><code class="language-sh" data-lang="sh">https://github.com/linux-sunxi/linux-sunxi</code></pre></div>
-
-<p>或者可以去固件目录下载。</p>
-
-<p>当前交叉编译系统的版本必须是ubuntu 12.04 lts，保证编译器版本为gcc 4.6，高版本编译的内核无法在开发板上运行。</p>
-
-<p>交叉编译环境准备：</p>
-
-<div class="highlight"><pre><code class="language-sh" data-lang="sh">sudo apt-get install build-essential u-boot-tools uboot-mkimage
-sudo apt-get install gcc-arm-linux-gnueabihf gcc-arm-linux-gnueabi
-sudo apt-get install libusb-1.0-0 libusb-1.0-0-dev git wget fakeroot kernel-package zlib1g-dev
-sudo apt-get install libncurses5-dev</code></pre></div>
-
-<p>其他包按照提示安装即可。</p>
-
-<p>编译选项打开HIDRAW：</p>
-
-<div class="highlight"><pre><code class="language-sh" data-lang="sh">make <span class="nv">ARCH</span><span class="o">=</span>arm menuconfig</code></pre></div>
-
-<p>编译：</p>
-
-<div class="highlight"><pre><code class="language-sh" data-lang="sh">make -j4 <span class="nv">ARCH</span><span class="o">=</span>arm <span class="nv">CROSS_COMPILE</span><span class="o">=</span>arm-none-linux-gnueabi- uImage modules</code></pre></div>
-
-<p>安装modules：</p>
-
-<div class="highlight"><pre><code class="language-sh" data-lang="sh">make <span class="nv">STRIP</span><span class="o">=</span>arm-none-linux-gnueabi-strip <span class="nv">INSTALL_MOD_PATH</span><span class="o">=</span>output <span class="nv">ARCH</span><span class="o">=</span>arm <span class="nv">INSTALL_MOD_STRIP</span><span class="o">=</span><span class="m">1</span> modules_install</code></pre></div>
-
-<p>然后把output目录下的modules替换到开发板的/lib/modules下，/arch/arm/boot/uImage替换到开发板/boot目录下，内核就升级完成了，重启即可。</p>
-
-<p>-EOF-</p>
-
-  </div><!-- /.entry-content -->
-</article><!-- /.hentry -->
-
-<article class="hentry">
-  <header>
-    
-    <div class="entry-meta">
-      <span class="entry-date date published updated"><time datetime="2013-01-30T00:00:00+00:00"><a href="/felix-tutorial/">January 30, 2013</a></time></span><span class="author vcard"><span class="fn"><a href="/about/" title="About Insomnia">Insomnia</a></span></span>
-      
-      <span class="entry-reading-time">
-        <i class="fa fa-clock-o"></i>
+          <h1 class="entry-title"><a href="/compile-jdk7-under-windows/" rel="bookmark" title="Windows下编译OpenJDK7 笔记">Windows下编译OpenJDK7 笔记</a></h1>
         
-        Reading time ~2 minutes
-      </span><!-- /.entry-reading-time -->
-      
-    </div><!-- /.entry-meta -->
-    
-      <h1 class="entry-title"><a href="/felix-tutorial/" rel="bookmark" title="Felix入门与实践" itemprop="url">Felix入门与实践</a></h1>
-    
-  </header>
-  <div class="entry-content">
-    <p>首先，我假设你已经了解OSGi相关的一些概念，如果没有，可以看看官方的文档。</p>
-
-<p>我们从创建一个监听OSGi Service事件的bundle开始。这个小例子并不会包含太多的东西，只是打印出注册以及未注册的Service的详细信息而已。下一篇我才会开始介绍实现了Service的bundle，这次只是通过一个范例来加深对于创建bundle基础知识的理解。</p>
-
-<p>OSGi框架通过与bundle唯一对应的BundleContext来访问一个bundle，而得到BundleContext必须实现BundleActivator接口。这个接口有两个方法，start()和stop()。当bundle的被start或者stop的时候，BundleContext将作为参数传入这两个方法，然后这两个方法才会被调用。下面的源代码是一个bundle，当然它实现了BundleContext接口，同时这个bundle添加了自身作为Service事件的监听器。</p>
-
-<div class="highlight"><pre><code class="language-java" data-lang="java"><span class="kn">package</span> <span class="n">tutorial</span><span class="o">.</span><span class="na">example1</span><span class="o">;</span>
-
-<span class="kn">import</span> <span class="nn">org.osgi.framework.BundleActivator</span><span class="o">;</span>
-<span class="kn">import</span> <span class="nn">org.osgi.framework.BundleContext</span><span class="o">;</span>
-<span class="kn">import</span> <span class="nn">org.osgi.framework.ServiceListener</span><span class="o">;</span>
-<span class="kn">import</span> <span class="nn">org.osgi.framework.ServiceEvent</span><span class="o">;</span>
-
-<span class="cm">/**</span>
-<span class="cm"> * This class implements a simple bundle that utilizes the OSGi</span>
-<span class="cm"> * framework&#39;s event mechanism to listen for service events. Upon</span>
-<span class="cm"> * receiving a service event, it prints out the event&#39;s details.</span>
-<span class="cm">**/</span>
-<span class="kd">public</span> <span class="kd">class</span> <span class="nc">Activator</span> <span class="kd">implements</span> <span class="n">BundleActivator</span><span class="o">,</span> <span class="n">ServiceListener</span>
-<span class="o">{</span>
-    <span class="cm">/**</span>
-<span class="cm">     * Implements BundleActivator.start(). Prints</span>
-<span class="cm">     * a message and adds itself to the bundle context as a service</span>
-<span class="cm">     * listener.</span>
-<span class="cm">     * @param context the framework context for the bundle.</span>
-<span class="cm">    **/</span>
-    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">start</span><span class="o">(</span><span class="n">BundleContext</span> <span class="n">context</span><span class="o">)</span>
-    <span class="o">{</span>
-        <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">&quot;Starting to listen for service events.&quot;</span><span class="o">);</span>
-        <span class="n">context</span><span class="o">.</span><span class="na">addServiceListener</span><span class="o">(</span><span class="k">this</span><span class="o">);</span>
-    <span class="o">}</span>
-
-    <span class="cm">/**</span>
-<span class="cm">     * Implements BundleActivator.stop(). Prints</span>
-<span class="cm">     * a message and removes itself from the bundle context as a</span>
-<span class="cm">     * service listener.</span>
-<span class="cm">     * @param context the framework context for the bundle.</span>
-<span class="cm">    **/</span>
-    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">stop</span><span class="o">(</span><span class="n">BundleContext</span> <span class="n">context</span><span class="o">)</span>
-    <span class="o">{</span>
-        <span class="n">context</span><span class="o">.</span><span class="na">removeServiceListener</span><span class="o">(</span><span class="k">this</span><span class="o">);</span>
-        <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">&quot;Stopped listening for service events.&quot;</span><span class="o">);</span>
-
-        <span class="c1">// Note: It is not required that we remove the listener here,</span>
-        <span class="c1">// since the framework will do it automatically anyway.</span>
-    <span class="o">}</span>
-
-    <span class="cm">/**</span>
-<span class="cm">     * Implements ServiceListener.serviceChanged().</span>
-<span class="cm">     * Prints the details of any service event from the framework.</span>
-<span class="cm">     * @param event the fired service event.</span>
-<span class="cm">    **/</span>
-    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">serviceChanged</span><span class="o">(</span><span class="n">ServiceEvent</span> <span class="n">event</span><span class="o">)</span>
-    <span class="o">{</span>
-        <span class="n">String</span><span class="o">[]</span> <span class="n">objectClass</span> <span class="o">=</span> <span class="o">(</span><span class="n">String</span><span class="o">[])</span>
-            <span class="n">event</span><span class="o">.</span><span class="na">getServiceReference</span><span class="o">().</span><span class="na">getProperty</span><span class="o">(</span><span class="s">&quot;objectClass&quot;</span><span class="o">);</span>
-
-        <span class="k">if</span> <span class="o">(</span><span class="n">event</span><span class="o">.</span><span class="na">getType</span><span class="o">()</span> <span class="o">==</span> <span class="n">ServiceEvent</span><span class="o">.</span><span class="na">REGISTERED</span><span class="o">)</span>
-        <span class="o">{</span>
-            <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span>
-                <span class="s">&quot;Ex1: Service of type &quot;</span> <span class="o">+</span> <span class="n">objectClass</span><span class="o">[</span><span class="mi">0</span><span class="o">]</span> <span class="o">+</span> <span class="s">&quot; registered.&quot;</span><span class="o">);</span>
-        <span class="o">}</span>
-        <span class="k">else</span> <span class="nf">if</span> <span class="o">(</span><span class="n">event</span><span class="o">.</span><span class="na">getType</span><span class="o">()</span> <span class="o">==</span> <span class="n">ServiceEvent</span><span class="o">.</span><span class="na">UNREGISTERING</span><span class="o">)</span>
-        <span class="o">{</span>
-            <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span>
-                <span class="s">&quot;Ex1: Service of type &quot;</span> <span class="o">+</span> <span class="n">objectClass</span><span class="o">[</span><span class="mi">0</span><span class="o">]</span> <span class="o">+</span> <span class="s">&quot; unregistered.&quot;</span><span class="o">);</span>
-        <span class="o">}</span>
-        <span class="k">else</span> <span class="nf">if</span> <span class="o">(</span><span class="n">event</span><span class="o">.</span><span class="na">getType</span><span class="o">()</span> <span class="o">==</span> <span class="n">ServiceEvent</span><span class="o">.</span><span class="na">MODIFIED</span><span class="o">)</span>
-        <span class="o">{</span>
-            <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span>
-                <span class="s">&quot;Ex1: Service of type &quot;</span> <span class="o">+</span> <span class="n">objectClass</span><span class="o">[</span><span class="mi">0</span><span class="o">]</span> <span class="o">+</span> <span class="s">&quot; modified.&quot;</span><span class="o">);</span>
-        <span class="o">}</span>
-    <span class="o">}</span>
-<span class="o">}</span></code></pre></div>
-
-<p>完成bundle的Java代码之后还不够，我们还需要定义一个包含了meta-data信息的manifest文件，这样OSGi框架才能“操作”这个bundle。manifest文件要和编译好的Java Class打包成一个Jar，而这个Jar包实际上就是一个bundle。我们接下来创建一个名为manifest.mf的文件，内容如下：</p>
-
-<div class="highlight"><pre><code class="language-html" data-lang="html">Bundle-Name: Service listener example
-Bundle-Description: A bundle that displays messages at startup and when service events occur
-Bundle-Vendor: Apache Felix
-Bundle-Version: 1.0.0
-Bundle-Activator: tutorial.example1.Activator
-Import-Package: org.osgi.framework</code></pre></div>
-
-<p>上面的meta-data信息大部分只是为了维护方便，实际上只有Bundle-Activator属性以及Import-Package属性是OSGi框架必须的。Bundle-Activator属性为框架指明了实现了BundleActivator接口的类。当OSGi框架start某个bundle的时候，将创建一个该属性指定的类的实例，同时调用该实例的start()方法；同样框架stop该bundle的时候，实例的stop()方法将被调用。Import-Package属性指定了这个bundle所依赖的外部类。所有的bundle必须导入org.osgi.framework这个类，因为它包含了OSGi类的核心定义。所有的包依赖关系都会由OSGi框架来验证以及处理。（注意，manifest文件最后一行之后必须有一个回车符，否则最后一行的内容将会被框架忽略。）</p>
-
-<p>然后就可以开始编译源代码了，我们需要把felix.jar添加到classpath中（Felix的bin目录中可以找到这个jar包），然后在命令行中运行：</p>
-
-<div class="highlight"><pre><code class="language-sh" data-lang="sh">javac -d c:<span class="se">\c</span>lasses *.java</code></pre></div>
-
-<p>上面的命令将会编译classes目录下所有的源代码，并将class二进制字节码输出到指定的子文件夹tutorial\example1中。编译完成之后，就可以把class文件和之前写好的bundle的manifest文件打包成jar。接着在命令行中运行：</p>
-
-<div class="highlight"><pre><code class="language-sh" data-lang="sh">jar cfm example1.jar manifest.mf -C c:<span class="se">\c</span>lasses tutorial<span class="se">\e</span>xample1</code></pre></div>
-
-<p>一个打包好的bundle就到手了，用Felix的Shell就可以安装并运行这个bundle，比如：</p>
-
-<div class="highlight"><pre><code class="language-sh" data-lang="sh">start file:/c:/tutorial/example1.jar</code></pre></div>
-
-<p>上面的命令会自动安装并start这个bundle。当然我们也可以手动安装并且运行。Felix的Shell有install和start两个命令，分别运行一下就OK。另外stop命令可以stop指定的bundle，而shutdown则是关闭整个Felix环境。</p>
-
-<p>-EOF-</p>
-
-  </div><!-- /.entry-content -->
-</article><!-- /.hentry -->
-
-<article class="hentry">
-  <header>
-    
-    <div class="entry-meta">
-      <span class="entry-date date published updated"><time datetime="2012-11-19T00:00:00+00:00"><a href="/compile-jdk7-under-windows/">November 19, 2012</a></time></span><span class="author vcard"><span class="fn"><a href="/about/" title="About Insomnia">Insomnia</a></span></span>
-      
-      <span class="entry-reading-time">
-        <i class="fa fa-clock-o"></i>
+        <h2><span class="entry-date date published"><time datetime="2012-11-19T00:00:00+00:00">November 19, 2012</time></span></h2>
         
-        Reading time ~3 minutes
-      </span><!-- /.entry-reading-time -->
-      
-    </div><!-- /.entry-meta -->
-    
-      <h1 class="entry-title"><a href="/compile-jdk7-under-windows/" rel="bookmark" title="Windows下编译OpenJDK7 笔记" itemprop="url">Windows下编译OpenJDK7 笔记</a></h1>
-    
-  </header>
-  <div class="entry-content">
-    <h3 id="section">0. 系统需求</h3>
+        <p class="entry-reading-time">
+          <i class="fa fa-clock-o"></i>
+          
+          Reading time ~3 minutes
+        </p><!-- /.entry-reading-time -->
+        
+      </div><!-- /.header-title-wrap -->
+    </header>
+    <div class="entry-content">
+      <h3 id="section">0. 系统需求</h3>
 
 <p>Windows XP SP3 / Windows 7 （强烈推荐用英文版系统进行构建，原因后详）</p>
 
@@ -626,26 +417,39 @@ SET <span class="nv">ALT_MSC_VER_RAW</span> <span class="o">=</span> 16.00.30319
 
 <p>-EOF-</p>
 
-  </div><!-- /.entry-content -->
-</article><!-- /.hentry -->
-
-
-<div class="pagination">
-  
-    Previous
-  
-  <ul class="inline-list">
-    <li>
-      
-        <span class="current-page">1</span>
-      
-    </li>
-    
+      <footer class="entry-meta">
+        <span class="entry-tags"><a href="/tags/#openjdk" title="Pages tagged openjdk" class="tag"><span class="term">openjdk</span></a><a href="/tags/#compile" title="Pages tagged compile" class="tag"><span class="term">compile</span></a><a href="/tags/#windows" title="Pages tagged windows" class="tag"><span class="term">windows</span></a><a href="/tags/#make" title="Pages tagged make" class="tag"><span class="term">make</span></a><a href="/tags/#cygwin" title="Pages tagged cygwin" class="tag"><span class="term">cygwin</span></a></span>
+        
+        <div class="social-share">
+  <ul class="socialcount socialcount-small inline-list">
+    <li class="facebook"><a href="https://www.facebook.com/sharer/sharer.php?u=/compile-jdk7-under-windows/" title="Share on Facebook"><span class="count"><i class="fa fa-facebook-square"></i> Like</span></a></li>
+    <li class="twitter"><a href="https://twitter.com/intent/tweet?text=/compile-jdk7-under-windows/" title="Share on Twitter"><span class="count"><i class="fa fa-twitter-square"></i> Tweet</span></a></li>
+    <li class="googleplus"><a href="https://plus.google.com/share?url=/compile-jdk7-under-windows/" title="Share on Google Plus"><span class="count"><i class="fa fa-google-plus-square"></i> +1</span></a></li>
   </ul>
+</div><!-- /.social-share -->
+      </footer>
+    </div><!-- /.entry-content -->
+    <section id="disqus_thread"></section><!-- /#disqus_thread -->
+    <div class="read-more">
   
-    Next
+    <div class="read-more-header">
+      <a href="" class="read-more-btn">Read More</a>
+    </div><!-- /.read-more-header -->
+    <div class="read-more-content">
+      <h3><a href="/install-cubieez-lubuntu-on-cubietruck/" title="cubietruck安装Cubieez/Lubuntu笔记">cubietruck安装Cubieez/Lubuntu笔记</a></h3>
+      <p>cubietruck安装Cubieez/Lubuntu笔记 <a href="/install-cubieez-lubuntu-on-cubietruck/">Continue reading</a></p>
+    </div><!-- /.read-more-content -->
   
-</div><!-- /.pagination -->
+  <div class="read-more-list">
+    
+      <div class="list-item">
+        <h4><a href="/felix-tutorial/" title="Felix入门与实践">Felix入门与实践</a></h4>
+        <span>Published on January 30, 2013</span>
+      </div><!-- /.list-item -->
+    
+  </div><!-- /.read-more-list -->
+</div><!-- /.read-more -->
+  </article>
 </div><!-- /#main -->
 
 <div class="footer-wrapper">
@@ -660,7 +464,29 @@ SET <span class="nv">ALT_MSC_VER_RAW</span> <span class="o">=</span> 16.00.30319
 
 
 
-          
+
+    <script type="text/javascript">
+        /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+        var disqus_shortname = 'hpstrtheme'; // required: replace example with your forum shortname
+
+        /* * * DON'T EDIT BELOW THIS LINE * * */
+        (function() {
+            var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+        })();
+
+        /* * * DON'T EDIT BELOW THIS LINE * * */
+        (function () {
+            var s = document.createElement('script'); s.async = true;
+            s.type = 'text/javascript';
+            s.src = '//' + disqus_shortname + '.disqus.com/count.js';
+            (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
+        }());
+    </script>
+    <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+    <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+	        
 
 </body>
 </html>

@@ -3,6 +3,7 @@ layout: post
 title: "Felix入门与实践"
 description: "Felix入门与实践"
 tags: [felix, OSGi, java, service]
+comments: false
 ---
 
 首先，我假设你已经了解OSGi相关的一些概念，如果没有，可以看看官方的文档。

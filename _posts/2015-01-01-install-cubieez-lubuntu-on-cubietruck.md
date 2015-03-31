@@ -3,6 +3,7 @@ layout: post
 title: "cubietruck安装Cubieez/Lubuntu笔记"
 description: "cubietruck安装Cubieez/Lubuntu笔记"
 tags: [嵌入式, ubuntu, cubietruck, cubieez]
+comments: false
 ---
 
 工具：

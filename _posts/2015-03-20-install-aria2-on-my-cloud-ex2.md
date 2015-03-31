@@ -3,6 +3,7 @@ layout: post
 title: "在My Cloud EX2上安装aria2和yaaw"
 description: "在My Cloud EX2上安装aria2和yaaw"
 tags: [嵌入式, kernel, my cloud, yaaw, aria2]
+comments: false
 ---
 
 ### 0. 前言

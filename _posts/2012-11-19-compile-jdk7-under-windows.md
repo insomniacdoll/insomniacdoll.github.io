@@ -3,6 +3,7 @@ layout: post
 title: "Windows下编译OpenJDK7 笔记"
 description: "Windows下编译OpenJDK7 笔记"
 tags: [openjdk, compile, windows, make, cygwin]
+comments: false
 ---
 
 ### 0. 系统需求

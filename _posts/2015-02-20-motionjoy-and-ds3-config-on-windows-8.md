@@ -15,7 +15,9 @@ http://motioninjoy.en.uptodown.com/
 
 由于MotionJoy的官网已经被功夫网和谐，而这个广告巨多的软件需要运行时联网，所以还需要到下面的链接去下载一个本地支持的补丁：  
 
-http://bbs.3dmgame.com/forum.php?mod=attachment&aid=MzA4MjMyNXw1MTkxNjYxYnwxNDMwNDc1NjMxfDB8NDQ3OTYwMw%3D%3D
+{% highlight sh %}
+http://bbs.3dmgame.com/forum.php?mod=attachment&aid=MzA4MjMyNXw1MTkxNjYxYnwxNDMwNDc1NjMxfDB8NDQ3OTYwMw%3D%3D  
+{% endhighlight %}
 
 将解压得到的文件覆盖到MotionJoy安装目录的DS3子目录下。  
 接下来，由于Windows 8.1对于驱动签名采取了比较严格的验证机制，直接安装DS3驱动是会失败的，所以需要使用管理员权限的命令行提示符执行以下命令将验证关闭：  

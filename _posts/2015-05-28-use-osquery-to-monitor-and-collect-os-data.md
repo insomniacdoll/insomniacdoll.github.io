@@ -49,13 +49,17 @@ make install
 如前言中所描述，osquery将计算机资源抽象成了数据库表，这些数据库表都是通过其内置的插件和API实现的。其中许多操作系统的内置资源抽象已经写好了，直接使用即可。下面看几个例子：  
 首先用osqueryi命令进入解释器模式。
 列出当前操作系统中所有的用户：
-{% highlight sql %} 
-SELECT * FROM users;
-{% endhighlight %}
+{% highlight sql %}  
+SELECT * FROM users;  
+{% endhighlight %}  
+运行结果：  
+![Users Image]({{ site.url }}/images/osquery/users.PNG)  
 列出所有进程：
 {% highlight sql %} 
-SELECT  pid, name, cmdline FROM processes;
-{% endhighlight %}
+SELECT  pid, name, cmdline FROM processes;  
+{% endhighlight %}  
+运行结果：  
+![Process Image]({{ site.url }}/images/osquery/process.PNG)  
 取得当前的进程名、PID以及该进程使用的端口：
 {% highlight sql %} 
 SELECT 
@@ -82,7 +86,9 @@ ON
 GROUP BY
     process.name, 
     process.pid;
-{% endhighlight %}
+{% endhighlight %}  
+运行结果：  
+![Files Image]({{ site.url }}/images/osquery/files.PNG)  
 获取到可能异常的ARP请求（广播的mac地址数量大于1）：
 {% highlight sql %} 
 SELECT 

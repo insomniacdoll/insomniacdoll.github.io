@@ -1,7 +1,7 @@
 ---
 layout: post
-title: "使用osquery进行系统监控和系统数据收集（1）"
-description: "使用osquery进行系统监控和系统数据收集（1）"
+title: "使用osquery进行系统监控和系统数据收集"
+description: "使用osquery进行系统监控和系统数据收集"
 tags: [os, kernel, osquery, thrift]
 comments: false
 ---

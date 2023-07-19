@@ -1,62 +1,152 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en">
-<title type="text">零時寝子</title>
-<generator uri="https://github.com/mojombo/jekyll">Jekyll</generator>
-<link rel="self" type="application/atom+xml" href="/feed.xml" />
-<link rel="alternate" type="text/html" href="" />
-<updated>2015-03-31T14:37:30+00:00</updated>
-<id>/</id>
-<author>
-  <name>Insomnia</name>
-  <uri>/</uri>
-  <email>insomniacdoll@gmail.com</email>
-</author>
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="4.3.2">Jekyll</generator><link href="http://localhost:4000/feed.xml" rel="self" type="application/atom+xml" /><link href="http://localhost:4000/" rel="alternate" type="text/html" /><updated>2023-07-19T11:40:02+08:00</updated><id>http://localhost:4000/feed.xml</id><title type="html">零時寝子</title><subtitle>Focus on Bigdata Engineering, AI and Data Mining </subtitle><entry><title type="html">使用osquery进行系统监控和系统数据收集（1）</title><link href="http://localhost:4000/2015/05/28/use-osquery-to-monitor-and-collect-os-data.html" rel="alternate" type="text/html" title="使用osquery进行系统监控和系统数据收集（1）" /><published>2015-05-28T00:00:00+08:00</published><updated>2015-05-28T00:00:00+08:00</updated><id>http://localhost:4000/2015/05/28/use-osquery-to-monitor-and-collect-os-data</id><content type="html" xml:base="http://localhost:4000/2015/05/28/use-osquery-to-monitor-and-collect-os-data.html"><![CDATA[<h3 id="0-前言">0. 前言</h3>
 
+<p>系统的实时监控系统，在技术上的选择并不少，比如商业的<a href="http://newrelic.com/">New Relic</a>，或者开源的<a href="">collectd</a>配合<a href="http://influxdb.com/">InfluxDB</a>+<a href="http://grafana.org/">Grafana</a>，都可以快捷迅速地解决需求。<br />
+本文介绍另外一种可能性，即osquery，它是facebook开源的一个项目，它将操作系统的各类资源看作一个RDBMS，允许开发者或者运维人员使用类SQL语言去查询系统数据。每一类系统资源都被抽象成一个有名数据库表，比如进程、已加载的内核模块、活动的网络链接、浏览器插件甚至硬件设备事件。<br />
+第一篇文章作为入门教程，仅介绍安装和基本使用。</p>
 
-<entry>
-  <title type="html"><![CDATA[在My Cloud EX2上安装aria2和yaaw]]></title>
- <link rel="alternate" type="text/html" href="/install-aria2-on-my-cloud-ex2/" />
-  <id>/install-aria2-on-my-cloud-ex2</id>
-  <published>2015-03-20T00:00:00+00:00</published>
-  <updated>2015-03-20T00:00:00+00:00</updated>
-  <author>
-    <name>Insomnia</name>
-    <uri></uri>
-    <email>insomniacdoll@gmail.com</email>
-  </author>
-  <content type="html">
-    &lt;h3 id=&quot;section&quot;&gt;0. 前言&lt;/h3&gt;
+<h3 id="1-安装">1. 安装</h3>
 
-&lt;p&gt;之前一直在使用My Book Live，可以方便地使用自带的Debian系统进行应用扩展。配合最常用的aria2和yaaw，可以方便地进行百度网盘、115网盘、迅雷离线等网络存储的脱机下载。&lt;/p&gt;
+<p>对于各类Linux发行版以及OSX，osquery已经有了直接的二进制安装包，直接使用包管理器进行安装即可。另外OSX在homebrew中也已经发布，可以直接使用brew进行安装。<br />
+下面介绍一下Linux下从源码编译安装的方法。<br />
+首先是osquery的源代码，可以从github获取：</p>
 
-&lt;p&gt;但由于My Book Live在设计上是单盘不可更换硬盘的结构，所以存储满了之后想更换一台扩展性更好的NAS，使用习惯的原因促使我购买了My Book Live的后续产品My Cloud EX2。但没想到My Cloud EX2更换了内部的软件系统，底层的Linux操作系统不再基于Debian，而是一个没有包管理器的自行定制内核，shell使用了busybox进行代替。想要直接安装软件就困难了许多。&lt;/p&gt;
+<figure class="highlight"><pre><code class="language-sh" data-lang="sh">  
+git clone https://github.com/facebook/osquery.git  </code></pre></figure>
 
-&lt;h3 id=&quot;section-1&quot;&gt;1. 前期准备&lt;/h3&gt;
+<p>然后根据官方文档，直接make deps会有问题，是因为thrift没有安装，找不到相应的库。<br />
+于是需要先安装同样出自Facebook的thrift，它是一个跨语言的服务框架，可以通过接口定义语言（IDL），生成不同语言的服务器和客户端接口，开发者在其基础上就可以轻松编写一个跨语言的网络服务了。thrift的源代码可以从apache的相关页面获取：</p>
 
-&lt;p&gt;首先是需要将原来My Book Live的数据备份出来，最快的办法是使用暴力将其拆开，然后将硬盘挂载到主板的SATA接口上进行数据对拷。这样多出来的数据盘还可以继续利用。&lt;/p&gt;
+<figure class="highlight"><pre><code class="language-sh" data-lang="sh">  
+https://thrift.apache.org/download  </code></pre></figure>
 
-&lt;p&gt;拆机的攻略可以参照：&lt;/p&gt;
+<p>同样是编译安装，首先安装依赖包和C++语言支持（需要boost）：</p>
 
-&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-sh&quot; data-lang=&quot;sh&quot;&gt;http://bbs.feng.com/read-htm-tid-5609125.html&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+<figure class="highlight"><pre><code class="language-sh" data-lang="sh">  
+<span class="nb">sudo </span>apt-get <span class="nb">install </span>libboost1.55-all-dev g++ flex bison autoconf automake libtool pkg-config  </code></pre></figure>
 
-&lt;p&gt;另外，拆机完成，挂载硬盘到SATA接口上以后，Linux操作系统（比如Ubuntu）是不能直接识别大分区的，需要进行如下操作：&lt;/p&gt;
+<p>如果需要java语言支持，那么还需要ant、maven以及JDK，还需要配置好相应的环境变量。<br />
+如果需要python语言支持，那么还需要python2.6以上的环境、pip以及python-dev软件包（包含开发头文件）。<br />
+如果需要ruby语言支持，那么还需要gem和bundler包管理器。<br />
+其他语言支持具体的需求可以参考thrift的<a href="https://thrift.apache.org/docs/install/">官方页面</a>。<br />
+然后进入到thrift的源码目录，使用configure命令进行编译配置，此时可以用with-XXX或者without-XXX来制定相关语言的支持。值得说明的是，0.9.2版本的thrift的单元测试有问题，某些测试需要的三方资源并没有出现在相应目录里面，所以直接make会出现单测错误编译失败的情况。只要在configure的时候加入–without-tests参数跳过单测即可。<br />
+然后就可以编译并安装：</p>
 
-&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-sh&quot; data-lang=&quot;sh&quot;&gt;sudo apt-get install fuseext2 parted
-sudo parted -l &lt;span class=&quot;c&quot;&gt;#找到磁盘标识，如/dev/sdb&lt;/span&gt;
-sudo fuseext2 -o allow_other -o ro -o sync_read /dev/sdb4 /mnt/&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+<figure class="highlight"><pre><code class="language-sh" data-lang="sh">  
+make  
+make <span class="nb">install</span></code></pre></figure>
 
-&lt;p&gt;其中allow_other参数很重要，否则会报没有权限的错误。&lt;/p&gt;
+<p>然后在默认配置下，thrift相关的库就已经在/usr/local/lib中了。<br />
+这时候回到osquery的目录，执行cmake . &amp;&amp; make deps，就会下载并编译其他依赖。值得说明的是，依赖库都在amazon的aws上，由于GFW的原因下载经常会断线，所以还是配置好一个可以顺利X墙的梯子。<br />
+另外，在默认情况下，osquery编译的时候会到/usr/local/lib中找thrift相关的库，如果你没有把thrift安装到这里，那么需要配置THRIFT_HOME的环境变量。<br />
+然后make &amp;&amp; make install，泡杯咖啡等着编译完毕即可。</p>
 
-&lt;p&gt;然后尽情备份即可。&lt;/p&gt;
+<h3 id="2-osquery的使用">2. osquery的使用</h3>
 
-&lt;h3 id=&quot;section-2&quot;&gt;2. 制作交叉编译工具链&lt;/h3&gt;
+<p>如前言中所描述，osquery将计算机资源抽象成了数据库表，这些数据库表都是通过其内置的插件和API实现的。其中许多操作系统的内置资源抽象已经写好了，直接使用即可。下面看几个例子：<br />
+首先用osqueryi命令进入解释器模式。
+列出当前操作系统中所有的用户：</p>
 
-&lt;p&gt;由于没有包管理器，不可能直接直接安装软件，那么就只能自行使用交叉编译工具进行源码编译。&lt;/p&gt;
+<figure class="highlight"><pre><code class="language-sql" data-lang="sql">  
+<span class="k">SELECT</span> <span class="o">*</span> <span class="k">FROM</span> <span class="n">users</span><span class="p">;</span>  </code></pre></figure>
 
-&lt;p&gt;首先看一下系统的芯片类型：&lt;/p&gt;
+<p>运行结果：<br />
+<img src="http://localhost:4000/images/osquery/users.PNG" alt="Users Image" /><br />
+列出所有进程：</p>
 
-&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-sh&quot; data-lang=&quot;sh&quot;&gt;&lt;span class=&quot;c&quot;&gt;# cat /proc/cpuinfo&lt;/span&gt;
-Processor       : Marvell PJ4Bv7 Processor rev &lt;span class=&quot;m&quot;&gt;1&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;v7l&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;
+<figure class="highlight"><pre><code class="language-sql" data-lang="sql"> 
+<span class="k">SELECT</span>  <span class="n">pid</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">cmdline</span> <span class="k">FROM</span> <span class="n">processes</span><span class="p">;</span>  </code></pre></figure>
+
+<p>运行结果：<br />
+<img src="http://localhost:4000/images/osquery/process.PNG" alt="Process Image" /><br />
+取得当前的进程名、PID以及该进程使用的端口：</p>
+
+<figure class="highlight"><pre><code class="language-sql" data-lang="sql"> 
+<span class="k">SELECT</span> 
+    <span class="k">DISTINCT</span> <span class="n">process</span><span class="p">.</span><span class="n">name</span><span class="p">,</span> <span class="n">listening</span><span class="p">.</span><span class="n">port</span><span class="p">,</span> <span class="n">process</span><span class="p">.</span><span class="n">pid</span>
+<span class="k">FROM</span> 
+    <span class="n">processes</span> <span class="k">AS</span> <span class="n">process</span>
+<span class="k">JOIN</span> 
+    <span class="n">listening_ports</span> <span class="k">AS</span> <span class="n">listening</span> 
+<span class="k">ON</span> 
+    <span class="n">process</span><span class="p">.</span><span class="n">pid</span> <span class="o">=</span> <span class="n">listening</span><span class="p">.</span><span class="n">pid</span>
+<span class="k">WHERE</span> 
+    <span class="n">listening</span><span class="p">.</span><span class="n">address</span> <span class="o">=</span> <span class="s1">'0.0.0.0'</span><span class="p">;</span></code></pre></figure>
+
+<p>取得当前系统中所有进程的打开文件的数量：</p>
+
+<figure class="highlight"><pre><code class="language-sql" data-lang="sql"> 
+<span class="k">SELECT</span> 
+    <span class="k">DISTINCT</span> <span class="n">process</span><span class="p">.</span><span class="n">name</span><span class="p">,</span> <span class="n">process</span><span class="p">.</span><span class="n">pid</span><span class="p">,</span> <span class="k">count</span><span class="p">(</span><span class="n">f</span><span class="p">.</span><span class="n">path</span><span class="p">)</span> <span class="k">as</span> <span class="n">file_count</span>
+<span class="k">FROM</span> 
+    <span class="n">processes</span> <span class="k">AS</span> <span class="n">process</span>
+<span class="k">JOIN</span> 
+    <span class="n">process_open_files</span> <span class="n">f</span>
+<span class="k">ON</span> 
+    <span class="n">process</span><span class="p">.</span><span class="n">pid</span> <span class="o">=</span> <span class="n">f</span><span class="p">.</span><span class="n">pid</span>
+<span class="k">GROUP</span> <span class="k">BY</span>
+    <span class="n">process</span><span class="p">.</span><span class="n">name</span><span class="p">,</span> 
+    <span class="n">process</span><span class="p">.</span><span class="n">pid</span><span class="p">;</span></code></pre></figure>
+
+<p>运行结果：<br />
+<img src="http://localhost:4000/images/osquery/files.PNG" alt="Files Image" /><br />
+获取到可能异常的ARP请求（广播的mac地址数量大于1）：</p>
+
+<figure class="highlight"><pre><code class="language-sql" data-lang="sql"> 
+<span class="k">SELECT</span> 
+    <span class="n">address</span><span class="p">,</span> <span class="n">mac</span><span class="p">,</span> <span class="k">count</span><span class="p">(</span><span class="n">mac</span><span class="p">)</span> <span class="k">AS</span> <span class="n">mac_count</span>
+<span class="k">FROM</span> 
+    <span class="n">arp_cache</span> 
+<span class="k">GROUP</span> <span class="k">BY</span> 
+    <span class="n">mac</span>
+<span class="k">HAVING</span> 
+    <span class="k">count</span><span class="p">(</span><span class="n">mac</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">;</span></code></pre></figure>
+
+<p>可以看出，osquery的使用极大地依赖table。具体其内置的table说明，可以参看<a href="https://osquery.io/docs/tables/">官方文档</a>。至于怎么编写一个plugin支持新的table，后续的文章将会介绍。</p>
+
+<h3 id="3-对比">3. 对比</h3>
+
+<p>对比collectd，osquery最大的优势，就是不需要再去关心那些系统数据收集所以来的软件库了，一切都已经由插件帮我们做好，只需要用SQL语句就能轻松查看并且收集到系统的运行数据。<br />
+另一方面，osquery目前还没有Grafana这样出色的前端来进行数据可视化的配合，collectd诸多功能强大的插件也是osquery所不具备的，整合成真正方便可用的产品，osquery还有路需要走。</p>
+
+<h3 id="4-参考资料">4. 参考资料</h3>
+
+<p>[1] https://github.com/facebook/osquery<br />
+[2] https://osquery.io/docs<br />
+[3] http://osquery.readthedocs.org/en/stable/development/building/<br />
+[4] https://thrift.apache.org/</p>
+
+<p>-EOF-</p>]]></content><author><name></name></author><category term="os" /><category term="kernel" /><category term="osquery" /><category term="thrift" /><summary type="html"><![CDATA[使用osquery进行系统监控和系统数据收集（1）]]></summary></entry><entry><title type="html">在My Cloud EX2上安装aria2和yaaw</title><link href="http://localhost:4000/2015/03/20/install-aria2-on-my-cloud-ex2.html" rel="alternate" type="text/html" title="在My Cloud EX2上安装aria2和yaaw" /><published>2015-03-20T00:00:00+08:00</published><updated>2015-03-20T00:00:00+08:00</updated><id>http://localhost:4000/2015/03/20/install-aria2-on-my-cloud-ex2</id><content type="html" xml:base="http://localhost:4000/2015/03/20/install-aria2-on-my-cloud-ex2.html"><![CDATA[<h3 id="0-前言">0. 前言</h3>
+
+<p>之前一直在使用My Book Live，可以方便地使用自带的Debian系统进行应用扩展。配合最常用的aria2和yaaw，可以方便地进行百度网盘、115网盘、迅雷离线等网络存储的脱机下载。</p>
+
+<p>但由于My Book Live在设计上是单盘不可更换硬盘的结构，所以存储满了之后想更换一台扩展性更好的NAS，使用习惯的原因促使我购买了My Book Live的后续产品My Cloud EX2。但没想到My Cloud EX2更换了内部的软件系统，底层的Linux操作系统不再基于Debian，而是一个没有包管理器的自行定制内核，shell使用了busybox进行代替。想要直接安装软件就困难了许多。</p>
+
+<h3 id="1-前期准备">1. 前期准备</h3>
+
+<p>首先是需要将原来My Book Live的数据备份出来，最快的办法是使用暴力将其拆开，然后将硬盘挂载到主板的SATA接口上进行数据对拷。这样多出来的数据盘还可以继续利用。</p>
+
+<p>拆机的攻略可以参照：</p>
+
+<figure class="highlight"><pre><code class="language-sh" data-lang="sh">http://bbs.feng.com/read-htm-tid-5609125.html</code></pre></figure>
+
+<p>另外，拆机完成，挂载硬盘到SATA接口上以后，Linux操作系统（比如Ubuntu）是不能直接识别大分区的，需要进行如下操作：</p>
+
+<figure class="highlight"><pre><code class="language-sh" data-lang="sh"><span class="nb">sudo </span>apt-get <span class="nb">install </span>fuseext2 parted
+<span class="nb">sudo </span>parted <span class="nt">-l</span> <span class="c">#找到磁盘标识，如/dev/sdb</span>
+<span class="nb">sudo </span>fuseext2 <span class="nt">-o</span> allow_other <span class="nt">-o</span> ro <span class="nt">-o</span> sync_read /dev/sdb4 /mnt/</code></pre></figure>
+
+<p>其中allow_other参数很重要，否则会报没有权限的错误。</p>
+
+<p>然后尽情备份即可。</p>
+
+<h3 id="2-制作交叉编译工具链">2. 制作交叉编译工具链</h3>
+
+<p>由于没有包管理器，不可能直接直接安装软件，那么就只能自行使用交叉编译工具进行源码编译。</p>
+
+<p>首先看一下系统的芯片类型：</p>
+
+<figure class="highlight"><pre><code class="language-sh" data-lang="sh"><span class="c"># cat /proc/cpuinfo</span>
+Processor       : Marvell PJ4Bv7 Processor rev 1 <span class="o">(</span>v7l<span class="o">)</span>
 BogoMIPS        : 1196.85
 Features        : swp half thumb fastmult vfp edsp vfpv3 vfpv3d16 tls 
 CPU implementer : 0x56
@@ -67,517 +157,402 @@ CPU revision    : 1
 
 Hardware        : Marvell Armada-370
 Revision        : 0000
-Serial          : 0000000000000000&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+Serial          : 0000000000000000</code></pre></figure>
 
-&lt;p&gt;芯片类型是Marvell Armada-370，也是定制的ARM芯片，那么可以使用crosstool-ng来进行交叉编译器构建。&lt;/p&gt;
+<p>芯片类型是Marvell Armada-370，也是定制的ARM芯片，那么可以使用crosstool-ng来进行交叉编译器构建。</p>
 
-&lt;p&gt;首先在宿主机（Ubuntu 14.04 LTS）上面从源码编译安装crosstool-ng，下载地址：&lt;/p&gt;
+<p>首先在宿主机（Ubuntu 14.04 LTS）上面从源码编译安装crosstool-ng，下载地址：</p>
 
-&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-sh&quot; data-lang=&quot;sh&quot;&gt;http://crosstool-ng.org/download/crosstool-ng/&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+<figure class="highlight"><pre><code class="language-sh" data-lang="sh">http://crosstool-ng.org/download/crosstool-ng/</code></pre></figure>
 
-&lt;p&gt;在编译安装crosstool-ng交叉工具之前，要安装与crosstool-ng工具相依赖的包文件：&lt;/p&gt;
+<p>在编译安装crosstool-ng交叉工具之前，要安装与crosstool-ng工具相依赖的包文件：</p>
 
-&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-sh&quot; data-lang=&quot;sh&quot;&gt;&lt;span class=&quot;c&quot;&gt;# apt-get install gcc g++ gdb libncurses5-dev bison flex texinfo autoconf automake libtool patch gcj cvs cvsd gawk pkg-config&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+<figure class="highlight"><pre><code class="language-sh" data-lang="sh"><span class="c"># apt-get install gcc g++ gdb libncurses5-dev bison flex texinfo autoconf automake libtool patch gcj cvs cvsd gawk pkg-config</span></code></pre></figure>
 
-&lt;p&gt;安装好以上依赖的包文件后，就可以编译安装crosstool-ng交叉编译工具了，在编译crosstool-ng交叉编译工具之前，要先配置crosstool-ng交叉编译工具的安装路径：&lt;/p&gt;
+<p>安装好以上依赖的包文件后，就可以编译安装crosstool-ng交叉编译工具了，在编译crosstool-ng交叉编译工具之前，要先配置crosstool-ng交叉编译工具的安装路径：</p>
 
-&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-sh&quot; data-lang=&quot;sh&quot;&gt;./configure --prefix&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;${&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;PATH&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+<figure class="highlight"><pre><code class="language-sh" data-lang="sh">./configure <span class="nt">--prefix</span><span class="o">=</span><span class="k">${</span><span class="nv">PATH</span><span class="k">}</span></code></pre></figure>
 
-&lt;p&gt;配置好安装路径后就要编译安装了：&lt;/p&gt;
+<p>配置好安装路径后就要编译安装了：</p>
 
-&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-sh&quot; data-lang=&quot;sh&quot;&gt;make
-make install&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+<figure class="highlight"><pre><code class="language-sh" data-lang="sh">make
+make <span class="nb">install</span></code></pre></figure>
 
-&lt;p&gt;安装好crosstool-ng交叉编译工具后，就要用该工具构建自己的交叉编译链，构建自己的交叉编译工具链之前，要建立自己的工作目录，还有对应的源码文件，然后拷贝默认配置文件到工作目录，进入工作目录后：&lt;/p&gt;
+<p>安装好crosstool-ng交叉编译工具后，就要用该工具构建自己的交叉编译链，构建自己的交叉编译工具链之前，要建立自己的工作目录，还有对应的源码文件，然后拷贝默认配置文件到工作目录，进入工作目录后：</p>
 
-&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-sh&quot; data-lang=&quot;sh&quot;&gt;cp ../crosstool-ng-1.9.3/samples/arm-unknown-linux-gnueabi /* ./   （以1.9.3为例）&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+<figure class="highlight"><pre><code class="language-sh" data-lang="sh"><span class="nb">cp</span> ../crosstool-ng-1.9.3/samples/arm-unknown-linux-gnueabi /<span class="k">*</span> ./   （以1.9.3为例）</code></pre></figure>
 
-&lt;p&gt;修改文件名：&lt;/p&gt;
+<p>修改文件名：</p>
 
-&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-sh&quot; data-lang=&quot;sh&quot;&gt;mv crosstool.config .config&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+<figure class="highlight"><pre><code class="language-sh" data-lang="sh"><span class="nb">mv </span>crosstool.config .config</code></pre></figure>
 
-&lt;p&gt;进入menuconfig，开始修改配置：&lt;/p&gt;
+<p>进入menuconfig，开始修改配置：</p>
 
-&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-sh&quot; data-lang=&quot;sh&quot;&gt;../crosstool-ng-1.9.3_install/bin/ct-ng menuconfig&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+<figure class="highlight"><pre><code class="language-sh" data-lang="sh">../crosstool-ng-1.9.3_install/bin/ct-ng menuconfig</code></pre></figure>
 
-&lt;p&gt;编译选项需要注意的选项如下：&lt;/p&gt;
+<p>编译选项需要注意的选项如下：</p>
 
-&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-sh&quot; data-lang=&quot;sh&quot;&gt;Paths and misc options  ---&amp;gt;Local tarballs directory  
-  &lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;/work/tools/Armada-370/crosstool-ng/src&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt; Local tarballs directory   保存源码包路径
-Paths and misc options  ---&amp;gt;Prefix directory   
-  &lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;/work/tools/Armada-370/x-tools/&lt;span class=&quot;k&quot;&gt;${&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;CT_TARGET&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt; Prefix directory  交叉编译器的安装路径
-Target options ---&amp;gt;Architecture level  
-Target options ---&amp;gt;Emit assembly &lt;span class=&quot;k&quot;&gt;for&lt;/span&gt; CPU&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+<figure class="highlight"><pre><code class="language-sh" data-lang="sh">Paths and misc options  <span class="nt">---</span><span class="o">&gt;</span>Local tarballs directory  
+  <span class="o">(</span>/work/tools/Armada-370/crosstool-ng/src<span class="o">)</span> Local tarballs directory   保存源码包路径
+Paths and misc options  <span class="nt">---</span><span class="o">&gt;</span>Prefix directory   
+  <span class="o">(</span>/work/tools/Armada-370/x-tools/<span class="k">${</span><span class="nv">CT_TARGET</span><span class="k">}</span><span class="o">)</span> Prefix directory  交叉编译器的安装路径
+Target options <span class="nt">---</span><span class="o">&gt;</span>Architecture level  
+Target options <span class="nt">---</span><span class="o">&gt;</span>Emit assembly <span class="k">for </span>CPU</code></pre></figure>
 
-&lt;p&gt;上面两个根据实际目标板来填写。每一项都可以进去看看，写的都很明确。&lt;/p&gt;
+<p>上面两个根据实际目标板来填写。每一项都可以进去看看，写的都很明确。</p>
 
-&lt;p&gt;这里还有个问题，就是源码包的版本在配置选项中没有的情况，可以通过打开工作目录下的vim .config文件手动修改。&lt;/p&gt;
+<p>这里还有个问题，就是源码包的版本在配置选项中没有的情况，可以通过打开工作目录下的vim .config文件手动修改。</p>
 
-&lt;p&gt;配置好路径和工具的各个版本后，直接运行：&lt;/p&gt;
+<p>配置好路径和工具的各个版本后，直接运行：</p>
 
-&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-sh&quot; data-lang=&quot;sh&quot;&gt;../crosstool_install/bin/ct-ng build&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+<figure class="highlight"><pre><code class="language-sh" data-lang="sh">../crosstool_install/bin/ct-ng build</code></pre></figure>
 
-&lt;p&gt;进行build前面的配置。最后就是漫长的等待（中间需要下载源码），等待之后，自己的交叉编译工具链就完成了。&lt;/p&gt;
+<p>进行build前面的配置。最后就是漫长的等待（中间需要下载源码），等待之后，自己的交叉编译工具链就完成了。</p>
 
-&lt;p&gt;此外，其实群晖的某个NAS也使用了Armada-370这个芯片进行产品定制，且放出了开发工具包，可以直接下载来使用：&lt;/p&gt;
+<p>此外，其实群晖的某个NAS也使用了Armada-370这个芯片进行产品定制，且放出了开发工具包，可以直接下载来使用：</p>
 
-&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-sh&quot; data-lang=&quot;sh&quot;&gt;http://sourceforge.net/projects/dsgpl/files/DSM%204.3%20Tool%20Chains/Marvell%20armada%20370%20Linux%203.2.40/&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+<figure class="highlight"><pre><code class="language-sh" data-lang="sh">http://sourceforge.net/projects/dsgpl/files/DSM%204.3%20Tool%20Chains/Marvell%20armada%20370%20Linux%203.2.40/</code></pre></figure>
 
-&lt;p&gt;但是&lt;strong&gt;需要注意&lt;/strong&gt;，这个现成的工具包gcc编译器版本是4.6，并不支持包含c++11特性的代码编译。后续文章讲到使用NAS来构建PS3镜像流文件服务器的时候，就必须要使用自行构建的工具链。&lt;/p&gt;
+<p>但是<strong>需要注意</strong>，这个现成的工具包gcc编译器版本是4.6，并不支持包含c++11特性的代码编译。后续文章讲到使用NAS来构建PS3镜像流文件服务器的时候，就必须要使用自行构建的工具链。</p>
 
-&lt;h3 id=&quot;aria2c&quot;&gt;3. 编译aria2c&lt;/h3&gt;
+<h3 id="3-编译aria2c">3. 编译aria2c</h3>
 
-&lt;p&gt;现在交叉编译器到手，就可以来直接编译aria2c了，能够进行脱机下载功能的aria2c使用到的第三方包包括c-ares、expat和zlib。&lt;/p&gt;
+<p>现在交叉编译器到手，就可以来直接编译aria2c了，能够进行脱机下载功能的aria2c使用到的第三方包包括c-ares、expat和zlib。</p>
 
-&lt;p&gt;为了自动下载源码和编译，我编写了一个shell脚本来完成：&lt;/p&gt;
+<p>为了自动下载源码和编译，我编写了一个shell脚本来完成：</p>
 
-&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-sh&quot; data-lang=&quot;sh&quot;&gt;&lt;span class=&quot;c&quot;&gt;#!/bin/sh&lt;/span&gt;
+<figure class="highlight"><pre><code class="language-sh" data-lang="sh"><span class="c">#!/bin/sh</span>
 
-&lt;span class=&quot;nv&quot;&gt;CWD&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;$(&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;pwd&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;)&lt;/span&gt;
-&lt;span class=&quot;nv&quot;&gt;NJOB&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;4
+<span class="nv">CWD</span><span class="o">=</span><span class="si">$(</span><span class="nb">pwd</span><span class="si">)</span>
+<span class="nv">NJOB</span><span class="o">=</span>4
 
-&lt;span class=&quot;c&quot;&gt;# Local folder where we install built binaries and libraries.&lt;/span&gt;
-&lt;span class=&quot;nv&quot;&gt;LOCAL_DIR&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;$(&lt;/span&gt;readlink -f ./local&lt;span class=&quot;k&quot;&gt;)&lt;/span&gt;
-mkdir -p &lt;span class=&quot;k&quot;&gt;${&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;LOCAL_DIR&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;}&lt;/span&gt;
+<span class="c"># Local folder where we install built binaries and libraries.</span>
+<span class="nv">LOCAL_DIR</span><span class="o">=</span><span class="si">$(</span><span class="nb">readlink</span> <span class="nt">-f</span> ./local<span class="si">)</span>
+<span class="nb">mkdir</span> <span class="nt">-p</span> <span class="k">${</span><span class="nv">LOCAL_DIR</span><span class="k">}</span>
 
-&lt;span class=&quot;c&quot;&gt;# Cross-compiler tools&lt;/span&gt;
-&lt;span class=&quot;nv&quot;&gt;TOOL_BIN_DIR&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;/opt/arm-marvell-linux-gnueabi/bin
-&lt;span class=&quot;nv&quot;&gt;TOOL_CC&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;${&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;TOOL_BIN_DIR&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;}&lt;/span&gt;/arm-marvell-linux-gnueabi-gcc
-&lt;span class=&quot;nv&quot;&gt;TOOL_CXX&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;${&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;TOOL_BIN_DIR&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;}&lt;/span&gt;/arm-marvell-linux-gnueabi-g++
+<span class="c"># Cross-compiler tools</span>
+<span class="nv">TOOL_BIN_DIR</span><span class="o">=</span>/opt/arm-marvell-linux-gnueabi/bin
+<span class="nv">TOOL_CC</span><span class="o">=</span><span class="k">${</span><span class="nv">TOOL_BIN_DIR</span><span class="k">}</span>/arm-marvell-linux-gnueabi-gcc
+<span class="nv">TOOL_CXX</span><span class="o">=</span><span class="k">${</span><span class="nv">TOOL_BIN_DIR</span><span class="k">}</span>/arm-marvell-linux-gnueabi-g++
 
-&lt;span class=&quot;nv&quot;&gt;PATH&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;${&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;TOOL_BIN_DIR&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;}&lt;/span&gt;:&lt;span class=&quot;nv&quot;&gt;$PATH&lt;/span&gt;
+<span class="nv">PATH</span><span class="o">=</span><span class="k">${</span><span class="nv">TOOL_BIN_DIR</span><span class="k">}</span>:<span class="nv">$PATH</span>
 
-&lt;span class=&quot;c&quot;&gt;# zlib&lt;/span&gt;
-rm -rf  zlib*
+<span class="c"># zlib</span>
+<span class="nb">rm</span> <span class="nt">-rf</span>  zlib<span class="k">*</span>
 wget http://zlib.net/zlib-1.2.8.tar.gz ./
-tar xzf zlib*.tar.gz
-&lt;span class=&quot;nb&quot;&gt;cd &lt;/span&gt;zlib*/
-&lt;span class=&quot;nv&quot;&gt;prefix&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;${&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;LOCAL_DIR&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;}&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;CC&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;${&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;TOOL_CC&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;}&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;CFLAGS&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&amp;quot;-O4&amp;quot;&lt;/span&gt; ./configure --static
-make -j&lt;span class=&quot;k&quot;&gt;${&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;NJOB&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;}&lt;/span&gt;
-make install
+<span class="nb">tar </span>xzf zlib<span class="k">*</span>.tar.gz
+<span class="nb">cd </span>zlib<span class="k">*</span>/
+<span class="nv">prefix</span><span class="o">=</span><span class="k">${</span><span class="nv">LOCAL_DIR</span><span class="k">}</span> <span class="nv">CC</span><span class="o">=</span><span class="k">${</span><span class="nv">TOOL_CC</span><span class="k">}</span> <span class="nv">CFLAGS</span><span class="o">=</span><span class="s2">"-O4"</span> ./configure <span class="nt">--static</span>
+make <span class="nt">-j</span><span class="k">${</span><span class="nv">NJOB</span><span class="k">}</span>
+make <span class="nb">install
 
-&lt;span class=&quot;nb&quot;&gt;cd&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;${&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;CWD&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;}&lt;/span&gt;
+cd</span> <span class="k">${</span><span class="nv">CWD</span><span class="k">}</span>
 
-&lt;span class=&quot;c&quot;&gt;# expat&lt;/span&gt;
-rm -rf expat*
+<span class="c"># expat</span>
+<span class="nb">rm</span> <span class="nt">-rf</span> expat<span class="k">*</span>
 wget http://downloads.sourceforge.net/expat/2.1.0/expat-2.1.0.tar.gz ./
-tar xzf expat*.tar.gz
-&lt;span class=&quot;nb&quot;&gt;cd &lt;/span&gt;expat*/
-./configure &lt;span class=&quot;se&quot;&gt;\&lt;/span&gt;
-    --host&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;arm-marvell-linux-gnueabi &lt;span class=&quot;se&quot;&gt;\&lt;/span&gt;
-    --build&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;i686-linux-gnu &lt;span class=&quot;se&quot;&gt;\&lt;/span&gt;
-    --enable-shared&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;no &lt;span class=&quot;se&quot;&gt;\&lt;/span&gt;
-    --enable-static&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;yes &lt;span class=&quot;se&quot;&gt;\&lt;/span&gt;
-    --prefix&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;${&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;LOCAL_DIR&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;}&lt;/span&gt;
-make -j&lt;span class=&quot;k&quot;&gt;${&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;NJOB&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;}&lt;/span&gt;
-make install
+<span class="nb">tar </span>xzf expat<span class="k">*</span>.tar.gz
+<span class="nb">cd </span>expat<span class="k">*</span>/
+./configure <span class="se">\</span>
+    <span class="nt">--host</span><span class="o">=</span>arm-marvell-linux-gnueabi <span class="se">\</span>
+    <span class="nt">--build</span><span class="o">=</span>i686-linux-gnu <span class="se">\</span>
+    <span class="nt">--enable-shared</span><span class="o">=</span>no <span class="se">\</span>
+    <span class="nt">--enable-static</span><span class="o">=</span><span class="nb">yes</span> <span class="se">\</span>
+    <span class="nt">--prefix</span><span class="o">=</span><span class="k">${</span><span class="nv">LOCAL_DIR</span><span class="k">}</span>
+make <span class="nt">-j</span><span class="k">${</span><span class="nv">NJOB</span><span class="k">}</span>
+make <span class="nb">install
 
-&lt;span class=&quot;nb&quot;&gt;cd&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;${&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;CWD&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;}&lt;/span&gt;
+cd</span> <span class="k">${</span><span class="nv">CWD</span><span class="k">}</span>
 
-&lt;span class=&quot;c&quot;&gt;# c-ares&lt;/span&gt;
-rm -rf c-ares*
+<span class="c"># c-ares</span>
+<span class="nb">rm</span> <span class="nt">-rf</span> c-ares<span class="k">*</span>
 wget http://c-ares.haxx.se/download/c-ares-1.10.0.tar.gz ./
-tar xzf c-ares*.tar.gz
-&lt;span class=&quot;nb&quot;&gt;cd &lt;/span&gt;c-ares*/
-./configure &lt;span class=&quot;se&quot;&gt;\&lt;/span&gt;
-    --host&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;arm-marvell-linux-gnueabi &lt;span class=&quot;se&quot;&gt;\&lt;/span&gt;
-    --build&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;i686-linux-gnu &lt;span class=&quot;se&quot;&gt;\&lt;/span&gt;
-    --enable-shared&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;no &lt;span class=&quot;se&quot;&gt;\&lt;/span&gt;
-    --enable-static&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;yes &lt;span class=&quot;se&quot;&gt;\&lt;/span&gt;
-    --prefix&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;${&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;LOCAL_DIR&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;}&lt;/span&gt;
-make -j&lt;span class=&quot;k&quot;&gt;${&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;NJOB&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;}&lt;/span&gt;
-make install
+<span class="nb">tar </span>xzf c-ares<span class="k">*</span>.tar.gz
+<span class="nb">cd </span>c-ares<span class="k">*</span>/
+./configure <span class="se">\</span>
+    <span class="nt">--host</span><span class="o">=</span>arm-marvell-linux-gnueabi <span class="se">\</span>
+    <span class="nt">--build</span><span class="o">=</span>i686-linux-gnu <span class="se">\</span>
+    <span class="nt">--enable-shared</span><span class="o">=</span>no <span class="se">\</span>
+    <span class="nt">--enable-static</span><span class="o">=</span><span class="nb">yes</span> <span class="se">\</span>
+    <span class="nt">--prefix</span><span class="o">=</span><span class="k">${</span><span class="nv">LOCAL_DIR</span><span class="k">}</span>
+make <span class="nt">-j</span><span class="k">${</span><span class="nv">NJOB</span><span class="k">}</span>
+make <span class="nb">install
 
-&lt;span class=&quot;nb&quot;&gt;cd&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;${&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;CWD&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;}&lt;/span&gt;
+cd</span> <span class="k">${</span><span class="nv">CWD</span><span class="k">}</span>
 
-&lt;span class=&quot;c&quot;&gt;# aria2&lt;/span&gt;
-rm -rf aria2*
+<span class="c"># aria2</span>
+<span class="nb">rm</span> <span class="nt">-rf</span> aria2<span class="k">*</span>
 wget http://downloads.sourceforge.net/aria2/aria2-1.18.10.tar.xz ./
-tar xJf aria2*.tar.xz
-&lt;span class=&quot;nb&quot;&gt;cd &lt;/span&gt;aria2*/
-./configure &lt;span class=&quot;se&quot;&gt;\&lt;/span&gt;
-    --host&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;arm-marvell-linux-gnueabi &lt;span class=&quot;se&quot;&gt;\&lt;/span&gt;
-    --build&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;i686-linux-gnu &lt;span class=&quot;se&quot;&gt;\&lt;/span&gt;
-    --disable-nls &lt;span class=&quot;se&quot;&gt;\&lt;/span&gt;
-    --disable-ssl &lt;span class=&quot;se&quot;&gt;\&lt;/span&gt;
-    --disable-epoll &lt;span class=&quot;se&quot;&gt;\&lt;/span&gt;
-    --without-gnutls &lt;span class=&quot;se&quot;&gt;\&lt;/span&gt;
-    --without-openssl &lt;span class=&quot;se&quot;&gt;\&lt;/span&gt;
-    --without-sqlite3 &lt;span class=&quot;se&quot;&gt;\&lt;/span&gt;
-    --without-libxml2 &lt;span class=&quot;se&quot;&gt;\&lt;/span&gt;
-    --with-libexpat --with-libexpat-prefix&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;${&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;LOCAL_DIR&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;}&lt;/span&gt; &lt;span class=&quot;se&quot;&gt;\&lt;/span&gt;
-    --with-libcares --with-libcares-prefix&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;${&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;LOCAL_DIR&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;}&lt;/span&gt; &lt;span class=&quot;se&quot;&gt;\&lt;/span&gt;
-    --with-libz --with-libz-prefix&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;${&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;LOCAL_DIR&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;}&lt;/span&gt; &lt;span class=&quot;se&quot;&gt;\&lt;/span&gt;
-    --prefix&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;${&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;LOCAL_DIR&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;}&lt;/span&gt; &lt;span class=&quot;se&quot;&gt;\&lt;/span&gt;
-    --enable-static&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;yes &lt;span class=&quot;se&quot;&gt;\&lt;/span&gt;
-    &lt;span class=&quot;nv&quot;&gt;CXXFLAGS&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&amp;quot;-Os -g&amp;quot;&lt;/span&gt; &lt;span class=&quot;se&quot;&gt;\&lt;/span&gt;
-    &lt;span class=&quot;nv&quot;&gt;CFLAGS&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&amp;quot;-Os -g&amp;quot;&lt;/span&gt; &lt;span class=&quot;se&quot;&gt;\&lt;/span&gt;
-    &lt;span class=&quot;nv&quot;&gt;LDFLAGS&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&amp;quot;-L${LOCAL_DIR}/lib&amp;quot;&lt;/span&gt; &lt;span class=&quot;se&quot;&gt;\&lt;/span&gt;
-    &lt;span class=&quot;nv&quot;&gt;PKG_CONFIG_LIBDIR&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&amp;quot;${LOCAL_DIR}/lib/pkgconfig&amp;quot;&lt;/span&gt; &lt;span class=&quot;se&quot;&gt;\&lt;/span&gt;
-    &lt;span class=&quot;nv&quot;&gt;ARIA2_STATIC&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&amp;quot;yes&amp;quot;&lt;/span&gt;
-make -j&lt;span class=&quot;k&quot;&gt;${&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;NJOB&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;}&lt;/span&gt;
-make install&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+<span class="nb">tar </span>xJf aria2<span class="k">*</span>.tar.xz
+<span class="nb">cd </span>aria2<span class="k">*</span>/
+./configure <span class="se">\</span>
+    <span class="nt">--host</span><span class="o">=</span>arm-marvell-linux-gnueabi <span class="se">\</span>
+    <span class="nt">--build</span><span class="o">=</span>i686-linux-gnu <span class="se">\</span>
+    <span class="nt">--disable-nls</span> <span class="se">\</span>
+    <span class="nt">--disable-ssl</span> <span class="se">\</span>
+    <span class="nt">--disable-epoll</span> <span class="se">\</span>
+    <span class="nt">--without-gnutls</span> <span class="se">\</span>
+    <span class="nt">--without-openssl</span> <span class="se">\</span>
+    <span class="nt">--without-sqlite3</span> <span class="se">\</span>
+    <span class="nt">--without-libxml2</span> <span class="se">\</span>
+    <span class="nt">--with-libexpat</span> <span class="nt">--with-libexpat-prefix</span><span class="o">=</span><span class="k">${</span><span class="nv">LOCAL_DIR</span><span class="k">}</span> <span class="se">\</span>
+    <span class="nt">--with-libcares</span> <span class="nt">--with-libcares-prefix</span><span class="o">=</span><span class="k">${</span><span class="nv">LOCAL_DIR</span><span class="k">}</span> <span class="se">\</span>
+    <span class="nt">--with-libz</span> <span class="nt">--with-libz-prefix</span><span class="o">=</span><span class="k">${</span><span class="nv">LOCAL_DIR</span><span class="k">}</span> <span class="se">\</span>
+    <span class="nt">--prefix</span><span class="o">=</span><span class="k">${</span><span class="nv">LOCAL_DIR</span><span class="k">}</span> <span class="se">\</span>
+    <span class="nt">--enable-static</span><span class="o">=</span><span class="nb">yes</span> <span class="se">\</span>
+    <span class="nv">CXXFLAGS</span><span class="o">=</span><span class="s2">"-Os -g"</span> <span class="se">\</span>
+    <span class="nv">CFLAGS</span><span class="o">=</span><span class="s2">"-Os -g"</span> <span class="se">\</span>
+    <span class="nv">LDFLAGS</span><span class="o">=</span><span class="s2">"-L</span><span class="k">${</span><span class="nv">LOCAL_DIR</span><span class="k">}</span><span class="s2">/lib"</span> <span class="se">\</span>
+    <span class="nv">PKG_CONFIG_LIBDIR</span><span class="o">=</span><span class="s2">"</span><span class="k">${</span><span class="nv">LOCAL_DIR</span><span class="k">}</span><span class="s2">/lib/pkgconfig"</span> <span class="se">\</span>
+    <span class="nv">ARIA2_STATIC</span><span class="o">=</span><span class="s2">"yes"</span>
+make <span class="nt">-j</span><span class="k">${</span><span class="nv">NJOB</span><span class="k">}</span>
+make <span class="nb">install</span></code></pre></figure>
 
-&lt;p&gt;上面的shell脚本可以直接自动从网络上下载截止博文发出的最新版本的aria2及其依赖的源码，并进行编译（全部使用静态编译，避免运行环境找不到库的情况出现）。&lt;/p&gt;
+<p>上面的shell脚本可以直接自动从网络上下载截止博文发出的最新版本的aria2及其依赖的源码，并进行编译（全部使用静态编译，避免运行环境找不到库的情况出现）。</p>
 
-&lt;p&gt;需要注意的是，TOOL_BIN_DIR是交叉工具链的安装目录，需要按照实际情况进行修改。&lt;/p&gt;
+<p>需要注意的是，TOOL_BIN_DIR是交叉工具链的安装目录，需要按照实际情况进行修改。</p>
 
-&lt;p&gt;&lt;strong&gt;&lt;em&gt;另外这个脚本应该在一个干净的目录进行执行。&lt;/em&gt;&lt;/strong&gt;&lt;/p&gt;
+<p><strong><em>另外这个脚本应该在一个干净的目录进行执行。</em></strong></p>
 
-&lt;h3 id=&quot;aria2cyaaw&quot;&gt;4. 安装aria2c和yaaw&lt;/h3&gt;
+<h3 id="4-安装aria2c和yaaw">4. 安装aria2c和yaaw</h3>
 
-&lt;p&gt;将编译得到的aria2上传到My Cloud EX2的目录：&lt;/p&gt;
+<p>将编译得到的aria2上传到My Cloud EX2的目录：</p>
 
-&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-sh&quot; data-lang=&quot;sh&quot;&gt;/mnt/HD/HD_a2/Nas_Prog&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+<figure class="highlight"><pre><code class="language-sh" data-lang="sh">/mnt/HD/HD_a2/Nas_Prog</code></pre></figure>
 
-&lt;p&gt;并建立一个配置文件，内容如下：&lt;/p&gt;
+<p>并建立一个配置文件，内容如下：</p>
 
-&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-sh&quot; data-lang=&quot;sh&quot;&gt;&lt;span class=&quot;nv&quot;&gt;daemon&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;true&lt;/span&gt;  &lt;span class=&quot;c&quot;&gt;#以daemon方式启动&lt;/span&gt;
-&lt;span class=&quot;nv&quot;&gt;dir&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;/mnt/HD/HD_a2/Private/Download  &lt;span class=&quot;c&quot;&gt;#下载目录&lt;/span&gt;
-disable-ipv6&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;true&lt;/span&gt; &lt;span class=&quot;c&quot;&gt;#禁用IPv6&lt;/span&gt;
-&lt;span class=&quot;nb&quot;&gt;enable&lt;/span&gt;-rpc&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;true&lt;/span&gt; &lt;span class=&quot;c&quot;&gt;#启用RPC，对于yaaw的配合使用非常重要&lt;/span&gt;
-rpc-allow-origin-all&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;true &lt;/span&gt;
-rpc-listen-all&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;true&lt;/span&gt;
-rpc-listen-port&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;m&quot;&gt;6800&lt;/span&gt; &lt;span class=&quot;c&quot;&gt;#监听端口&lt;/span&gt;
-&lt;span class=&quot;k&quot;&gt;continue&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;true&lt;/span&gt; &lt;span class=&quot;c&quot;&gt;#开启断点续传&lt;/span&gt;
-input-file&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;/mnt/HD/HD_a2/Nas_Prog/aria2/session/aria2.session &lt;span class=&quot;c&quot;&gt;#session保存地址，用于记录任务信息&lt;/span&gt;
-save-session&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;/mnt/HD/HD_a2/Nas_Prog/aria2/session/aria2.session
-file-allocation&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;falloc &lt;span class=&quot;c&quot;&gt;#文件分配方式&lt;/span&gt;
-max-concurrent-downloads&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;m&quot;&gt;1&lt;/span&gt; &lt;span class=&quot;c&quot;&gt;#最大并行下载任务数量&lt;/span&gt;
-max-connection-per-server&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;m&quot;&gt;5&lt;/span&gt; &lt;span class=&quot;c&quot;&gt;#每个服务器的并发连接数&lt;/span&gt;
-min-split-size&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;10M &lt;span class=&quot;c&quot;&gt;#最大文件分割大小&lt;/span&gt;
-&lt;span class=&quot;nv&quot;&gt;split&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;m&quot;&gt;10&lt;/span&gt; &lt;span class=&quot;c&quot;&gt;#文件分割块数&lt;/span&gt;
-&lt;span class=&quot;nv&quot;&gt;log&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;/mnt/HD/HD_a2/Nas_Prog/aria2/log/aria2.log &lt;span class=&quot;c&quot;&gt;#日志路径&lt;/span&gt;
-log-level&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;warn &lt;span class=&quot;c&quot;&gt;#日志级别&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+<figure class="highlight"><pre><code class="language-sh" data-lang="sh"><span class="nv">daemon</span><span class="o">=</span><span class="nb">true</span>  <span class="c">#以daemon方式启动</span>
+<span class="nb">dir</span><span class="o">=</span>/mnt/HD/HD_a2/Private/Download  <span class="c">#下载目录</span>
+disable-ipv6<span class="o">=</span><span class="nb">true</span> <span class="c">#禁用IPv6</span>
+enable-rpc<span class="o">=</span><span class="nb">true</span> <span class="c">#启用RPC，对于yaaw的配合使用非常重要</span>
+rpc-allow-origin-all<span class="o">=</span><span class="nb">true 
+</span>rpc-listen-all<span class="o">=</span><span class="nb">true
+</span>rpc-listen-port<span class="o">=</span>6800 <span class="c">#监听端口</span>
+<span class="k">continue</span><span class="o">=</span><span class="nb">true</span> <span class="c">#开启断点续传</span>
+input-file<span class="o">=</span>/mnt/HD/HD_a2/Nas_Prog/aria2/session/aria2.session <span class="c">#session保存地址，用于记录任务信息</span>
+save-session<span class="o">=</span>/mnt/HD/HD_a2/Nas_Prog/aria2/session/aria2.session
+file-allocation<span class="o">=</span>falloc <span class="c">#文件分配方式</span>
+max-concurrent-downloads<span class="o">=</span>1 <span class="c">#最大并行下载任务数量</span>
+max-connection-per-server<span class="o">=</span>5 <span class="c">#每个服务器的并发连接数</span>
+min-split-size<span class="o">=</span>10M <span class="c">#最大文件分割大小</span>
+<span class="nb">split</span><span class="o">=</span>10 <span class="c">#文件分割块数</span>
+<span class="nv">log</span><span class="o">=</span>/mnt/HD/HD_a2/Nas_Prog/aria2/log/aria2.log <span class="c">#日志路径</span>
+log-level<span class="o">=</span>warn <span class="c">#日志级别</span></code></pre></figure>
 
-&lt;p&gt;然后用命令启动：&lt;/p&gt;
+<p>然后用命令启动：</p>
 
-&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-sh&quot; data-lang=&quot;sh&quot;&gt;&lt;span class=&quot;nb&quot;&gt;cd&lt;/span&gt; /mnt/HD/HD_a2/Nas_Prog/aria2
-./aria2c --conf-path&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;./conf/aria2.conf&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+<figure class="highlight"><pre><code class="language-sh" data-lang="sh"><span class="nb">cd</span> /mnt/HD/HD_a2/Nas_Prog/aria2
+./aria2c <span class="nt">--conf-path</span><span class="o">=</span>./conf/aria2.conf</code></pre></figure>
 
-&lt;p&gt;然后安装yaaw，下载地址：&lt;/p&gt;
+<p>然后安装yaaw，下载地址：</p>
 
-&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-sh&quot; data-lang=&quot;sh&quot;&gt;https://github.com/binux/yaaw&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+<figure class="highlight"><pre><code class="language-sh" data-lang="sh">https://github.com/binux/yaaw</code></pre></figure>
 
-&lt;p&gt;解压后也放到/mnt/HD/HD_a2/Nas_Prog目录，然后建立一个指向web服务器根目录的软连接：&lt;/p&gt;
+<p>解压后也放到/mnt/HD/HD_a2/Nas_Prog目录，然后建立一个指向web服务器根目录的软连接：</p>
 
-&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-sh&quot; data-lang=&quot;sh&quot;&gt;ln -s /mnt/HD/HD_a2/Nas_Prog/yaaw /var/www/yaaw&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+<figure class="highlight"><pre><code class="language-sh" data-lang="sh"><span class="nb">ln</span> <span class="nt">-s</span> /mnt/HD/HD_a2/Nas_Prog/yaaw /var/www/yaaw</code></pre></figure>
 
-&lt;p&gt;这样就可以直接从NAS的IP访问到yaaw了。&lt;/p&gt;
+<p>这样就可以直接从NAS的IP访问到yaaw了。</p>
 
-&lt;h3 id=&quot;section-3&quot;&gt;5. 后续配置&lt;/h3&gt;
+<h3 id="5-后续配置">5. 后续配置</h3>
 
-&lt;p&gt;使用上，可以配合百度云盘、115网盘的chrome插件进行。&lt;/p&gt;
+<p>使用上，可以配合百度云盘、115网盘的chrome插件进行。</p>
 
-&lt;p&gt;Chrome Web Store的地址：&lt;/p&gt;
+<p>Chrome Web Store的地址：</p>
 
-&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-sh&quot; data-lang=&quot;sh&quot;&gt;115网盘： https://chrome.google.com/webstore/detail/115exporter/ojafklbojgenkohhdgdjeaepnbjffdjf
+<figure class="highlight"><pre><code class="language-sh" data-lang="sh">115网盘： https://chrome.google.com/webstore/detail/115exporter/ojafklbojgenkohhdgdjeaepnbjffdjf
 
-百度网盘： https://chrome.google.com/webstore/detail/baiduexporter/mjaenbjdjmgolhoafkohbhhbaiedbkno&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+百度网盘： https://chrome.google.com/webstore/detail/baiduexporter/mjaenbjdjmgolhoafkohbhhbaiedbkno</code></pre></figure>
 
-&lt;p&gt;配置上，将json-rpc的地址指向【NAS的IP:6800】即可（默认情况），然后下载的时候选中需要下载的文件，按“导出到RPC”。&lt;/p&gt;
+<p>配置上，将json-rpc的地址指向【NAS的IP:6800】即可（默认情况），然后下载的时候选中需要下载的文件，按“导出到RPC”。</p>
 
-&lt;p&gt;此外，【http://NAS的IP/yaaw】这个地址可以查看aria2的运行情况，同时也可以使用Web的方式来使用Aria2，当然下载都是My Cloud EX2的任务了。&lt;/p&gt;
+<p>此外，【http://NAS的IP/yaaw】这个地址可以查看aria2的运行情况，同时也可以使用Web的方式来使用Aria2，当然下载都是My Cloud EX2的任务了。</p>
 
-&lt;p&gt;-EOF-&lt;/p&gt;
+<p>-EOF-</p>]]></content><author><name></name></author><category term="嵌入式" /><category term="kernel" /><category term="my cloud" /><category term="yaaw" /><category term="aria2" /><summary type="html"><![CDATA[在My Cloud EX2上安装aria2和yaaw]]></summary></entry><entry><title type="html">Windows 8/8.1 上的MotionJoy和DS3配置</title><link href="http://localhost:4000/2015/02/20/motionjoy-and-ds3-config-on-windows-8.html" rel="alternate" type="text/html" title="Windows 8/8.1 上的MotionJoy和DS3配置" /><published>2015-02-20T00:00:00+08:00</published><updated>2015-02-20T00:00:00+08:00</updated><id>http://localhost:4000/2015/02/20/motionjoy-and-ds3-config-on-windows-8</id><content type="html" xml:base="http://localhost:4000/2015/02/20/motionjoy-and-ds3-config-on-windows-8.html"><![CDATA[<p>最近更新了Windows 8.1系统，原来使用正常的MotionJoy没法正常安装了，google了一圈解决办法，记录在这里。<br />
+首先还是要到MotionJoy的官网上去下载最新版本的安装包，然后安装：</p>
 
-    &lt;p&gt;&lt;a href=&quot;/install-aria2-on-my-cloud-ex2/&quot;&gt;在My Cloud EX2上安装aria2和yaaw&lt;/a&gt; was originally published by Insomnia at &lt;a href=&quot;&quot;&gt;零時寝子&lt;/a&gt; on March 20, 2015.&lt;/p&gt;
-  </content>
-</entry>
+<figure class="highlight"><pre><code class="language-sh" data-lang="sh">http://motioninjoy.en.uptodown.com/  </code></pre></figure>
 
+<p>由于MotionJoy的官网已经被功夫网和谐，而这个广告巨多的软件需要运行时联网，所以还需要到下面的链接去下载一个本地支持的补丁：</p>
 
-<entry>
-  <title type="html"><![CDATA[cubietruck安装Cubieez/Lubuntu笔记]]></title>
- <link rel="alternate" type="text/html" href="/install-cubieez-lubuntu-on-cubietruck/" />
-  <id>/install-cubieez-lubuntu-on-cubietruck</id>
-  <published>2015-01-01T00:00:00+00:00</published>
-  <updated>2015-01-01T00:00:00+00:00</updated>
-  <author>
-    <name>Insomnia</name>
-    <uri></uri>
-    <email>insomniacdoll@gmail.com</email>
-  </author>
-  <content type="html">
-    &lt;p&gt;工具：&lt;/p&gt;
+<figure class="highlight"><pre><code class="language-sh" data-lang="sh">http://bbs.3dmgame.com/forum.php?mod<span class="o">=</span>attachment&amp;aid<span class="o">=</span>MzA4MjMyNXw1MTkxNjYxYnwxNDMwNDc1NjMxfDB8NDQ3OTYwMw%3D%3D  </code></pre></figure>
 
-&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-sh&quot; data-lang=&quot;sh&quot;&gt;PhoneixSuite&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;Windows&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;
-SecureCRT&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+<p>将解压得到的文件覆盖到MotionJoy安装目录的DS3子目录下。<br />
+接下来，由于Windows 8.1对于驱动签名采取了比较严格的验证机制，直接安装DS3驱动是会失败的，所以需要使用管理员权限的命令行提示符执行以下命令将验证关闭：</p>
 
-&lt;p&gt;固件下载链接：&lt;/p&gt;
+<figure class="highlight"><pre><code class="language-sh" data-lang="sh">bcdedit <span class="nt">-set</span> loadoptions DISABLE_INTEGRITY_CHECKS  
+bcdedit <span class="nt">-set</span> TESTSIGNING ON  
+bcdedit /set testsigning on  </code></pre></figure>
 
-&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-sh&quot; data-lang=&quot;sh&quot;&gt;http://dl.cubieboard.org/software/a20-cubietruck/&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+<p>运行完毕后重新启动计算机。<br />
+然后插入DS3手柄，进入MotionJoy安装目录的DS3子目录，以管理员权限运行DS3_Tool_Local.exe，点击Driver Manager，选中识别到的手柄，选择Install All即可安装驱动。<br />
+安装完毕后点击Profiles，可以看到手柄已经被成功识别。</p>
 
-&lt;p&gt;按照需求下载对应的固件，解压后使用PhoneixSuite刷入cubietruck即可。&lt;/p&gt;
+<p>最后把验证再重新开启：</p>
 
-&lt;p&gt;罗技无线键鼠没法使用的解决办法：&lt;/p&gt;
+<figure class="highlight"><pre><code class="language-sh" data-lang="sh">bcdedit /set testsigning off  
+bcdedit <span class="nt">-set</span> TESTSIGNING OFF  </code></pre></figure>]]></content><author><name></name></author><category term="motionjoy" /><category term="ps3" /><category term="ds3" /><summary type="html"><![CDATA[Windows 8/8.1 上的MotionJoy和DS3配置]]></summary></entry><entry><title type="html">cubietruck安装Cubieez/Lubuntu笔记</title><link href="http://localhost:4000/2015/01/01/install-cubieez-lubuntu-on-cubietruck.html" rel="alternate" type="text/html" title="cubietruck安装Cubieez/Lubuntu笔记" /><published>2015-01-01T00:00:00+08:00</published><updated>2015-01-01T00:00:00+08:00</updated><id>http://localhost:4000/2015/01/01/install-cubieez-lubuntu-on-cubietruck</id><content type="html" xml:base="http://localhost:4000/2015/01/01/install-cubieez-lubuntu-on-cubietruck.html"><![CDATA[<p>工具：</p>
 
-&lt;p&gt;因为内核中的驱动支持HIDRAW默认是关闭的，重新编译一次内核即可。&lt;/p&gt;
+<figure class="highlight"><pre><code class="language-sh" data-lang="sh">PhoneixSuite<span class="o">(</span>Windows<span class="o">)</span>
+SecureCRT</code></pre></figure>
 
-&lt;p&gt;烧录好的系统，ssh登录进去，到/proc/目录下找到config.gz，是当前内核的配置文件，拷贝出来到内核源码目录，解压重命名为.config。这么做是为了最大兼容当前运行内核。&lt;/p&gt;
+<p>固件下载链接：</p>
 
-&lt;p&gt;内核源码的github地址：&lt;/p&gt;
+<figure class="highlight"><pre><code class="language-sh" data-lang="sh">http://dl.cubieboard.org/software/a20-cubietruck/</code></pre></figure>
 
-&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-sh&quot; data-lang=&quot;sh&quot;&gt;https://github.com/linux-sunxi/linux-sunxi&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+<p>按照需求下载对应的固件，解压后使用PhoneixSuite刷入cubietruck即可。</p>
 
-&lt;p&gt;或者可以去固件目录下载。&lt;/p&gt;
+<p>罗技无线键鼠没法使用的解决办法：</p>
 
-&lt;p&gt;当前交叉编译系统的版本必须是ubuntu 12.04 lts，保证编译器版本为gcc 4.6，高版本编译的内核无法在开发板上运行。&lt;/p&gt;
-
-&lt;p&gt;交叉编译环境准备：&lt;/p&gt;
-
-&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-sh&quot; data-lang=&quot;sh&quot;&gt;sudo apt-get install build-essential u-boot-tools uboot-mkimage
-sudo apt-get install gcc-arm-linux-gnueabihf gcc-arm-linux-gnueabi
-sudo apt-get install libusb-1.0-0 libusb-1.0-0-dev git wget fakeroot kernel-package zlib1g-dev
-sudo apt-get install libncurses5-dev&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+<p>因为内核中的驱动支持HIDRAW默认是关闭的，重新编译一次内核即可。</p>
 
-&lt;p&gt;其他包按照提示安装即可。&lt;/p&gt;
-
-&lt;p&gt;编译选项打开HIDRAW：&lt;/p&gt;
+<p>烧录好的系统，ssh登录进去，到/proc/目录下找到config.gz，是当前内核的配置文件，拷贝出来到内核源码目录，解压重命名为.config。这么做是为了最大兼容当前运行内核。</p>
 
-&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-sh&quot; data-lang=&quot;sh&quot;&gt;make &lt;span class=&quot;nv&quot;&gt;ARCH&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;arm menuconfig&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+<p>内核源码的github地址：</p>
 
-&lt;p&gt;编译：&lt;/p&gt;
+<figure class="highlight"><pre><code class="language-sh" data-lang="sh">https://github.com/linux-sunxi/linux-sunxi</code></pre></figure>
 
-&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-sh&quot; data-lang=&quot;sh&quot;&gt;make -j4 &lt;span class=&quot;nv&quot;&gt;ARCH&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;arm &lt;span class=&quot;nv&quot;&gt;CROSS_COMPILE&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;arm-none-linux-gnueabi- uImage modules&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
-
-&lt;p&gt;安装modules：&lt;/p&gt;
-
-&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-sh&quot; data-lang=&quot;sh&quot;&gt;make &lt;span class=&quot;nv&quot;&gt;STRIP&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;arm-none-linux-gnueabi-strip &lt;span class=&quot;nv&quot;&gt;INSTALL_MOD_PATH&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;output &lt;span class=&quot;nv&quot;&gt;ARCH&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;arm &lt;span class=&quot;nv&quot;&gt;INSTALL_MOD_STRIP&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;m&quot;&gt;1&lt;/span&gt; modules_install&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
-
-&lt;p&gt;然后把output目录下的modules替换到开发板的/lib/modules下，/arch/arm/boot/uImage替换到开发板/boot目录下，内核就升级完成了，重启即可。&lt;/p&gt;
-
-&lt;p&gt;-EOF-&lt;/p&gt;
-
-    &lt;p&gt;&lt;a href=&quot;/install-cubieez-lubuntu-on-cubietruck/&quot;&gt;cubietruck安装Cubieez/Lubuntu笔记&lt;/a&gt; was originally published by Insomnia at &lt;a href=&quot;&quot;&gt;零時寝子&lt;/a&gt; on January 01, 2015.&lt;/p&gt;
-  </content>
-</entry>
-
-
-<entry>
-  <title type="html"><![CDATA[DEGUCHI]]></title>
- <link rel="alternate" type="text/html" href="/deguchi/" />
-  <id>/deguchi</id>
-  <published>2013-11-11T00:00:00+00:00</published>
-  <updated>2013-11-11T00:00:00+00:00</updated>
-  <author>
-    <name>Insomnia</name>
-    <uri></uri>
-    <email>insomniacdoll@gmail.com</email>
-  </author>
-  <content type="html">
-    &lt;p&gt;算了一下，距离上次更新blog，是两年零八个月又十四天。&lt;br /&gt;
-当然，如果所谓死理性派的严谨非要在这里作怪，那么还要加上已经过去的22小时。&lt;br /&gt;
-以及在输入那个很久没有打开过的地址之后，思索密码究竟是啥的时间，大概是10分钟。&lt;/p&gt;
-
-&lt;p&gt;不再写blog的原因，只是单纯地犯懒而已。&lt;br /&gt;
-再说微博和微信这种SNS工具流行开以后，有什么想法随时就能发出，谁会正襟危坐半小时敲出千把字。&lt;br /&gt;
-这么说来，人类还真是容易改变的动物呢。&lt;br /&gt;
-——我真的没有在为自己的末期拖延症寻找借口。&lt;/p&gt;
-
-&lt;p&gt;前一阵，去电影院重看了新海诚监督的三部动画电影，『云之彼端约束之地』、『秒速5厘米』和『言语之庭』。&lt;br /&gt;
-其实最开始并不是非常喜欢新海诚的调调，总觉得是霓虹死宅中二病发无可救药的伤春悲秋。&lt;br /&gt;
-也写过很多篇与秒5的虐心有关的blog，都是在很久以后会脸红『自己为啥会写出这么无病呻吟』的文章。&lt;br /&gt;
-但是坐在电影院的座位上，看到贵树抬头望着压抑到窒息的天空，背景上是以秒速5厘米飘落的雪花，还是悲伤地想哭。&lt;/p&gt;
-
-&lt;p&gt;我能想象贵树没有被描绘的人生，二十岁对着大海咆哮的青春肆意以及三十岁对着来路踟蹰不忍卒视的傻X。&lt;br /&gt;
-青春的大海迷醉过一次也就够了，要知道这个月房租刚涨，自己也许需要打开Crack the Interview看一看，当中是怎么有技巧地说服面试官给到自己期望的薪水。&lt;br /&gt;
-不然就是，把自己手上有的东西团成一个圆润的饼，用这个公司教导自己的所谓『狼性』——像湿婆那样从来不曾停下，跟个机器一样『不屈不挠奋不顾身』地工作。&lt;br /&gt;
-停下来，就会喃喃自语，『我到底为什么要做一个演员』？&lt;/p&gt;
-
-&lt;p&gt;可做演员不是尹天仇的理想吗？&lt;br /&gt;
-就像白晶晶用月光宝盒穿梭时光一次又一次，也就是为了看看自己到底是怎么失去了一个自己根本无法握在手中的东西。&lt;br /&gt;
-所以，何必仇恨那些人人奔向的生活。&lt;br /&gt;
-攒够年假，和家人朋友一起去体验椰林树影，水清沙白。&lt;br /&gt;
-办公桌上堆满各种geek感爆棚的新奇小玩意儿。&lt;br /&gt;
-老板总是不满意你的工作，可下个月还是会给你加薪水。&lt;br /&gt;
-有时候忙的脚不沾地，一休假在家又觉得闲的O疼。&lt;br /&gt;
-真的不用在上坡的时候，就担心下坡的时候会摔得鼻青脸肿。&lt;/p&gt;
-
-&lt;p&gt;但是，有时候还是会想，下一个出口究竟是什么。&lt;br /&gt;
-出口可以是不断编写没有收件人的短信，退出的时候选择『不保存』。&lt;br /&gt;
-出口也可以是得知一切真相以后，明知结局如何，还是义无反顾地驾驶Velaciela靠近神秘的巨塔。&lt;br /&gt;
-被巨大人生磨平的方式有好多好多种，但归根到底都是臣服。&lt;br /&gt;
-你有一个朋友，口头禅是『那也是没关系呀』，你想，你一定要好好跟他学习。&lt;br /&gt;
-你这种怪逼，做个普通人已经是一件很大很大的挑战，你竟然觉得出任CEO迎娶白富美和落魄到不得不绑架老板的人生，你这辈子都不能错过。&lt;br /&gt;
-你和好朋友聊起来的时候，朋友总笑你，『要的太多』。&lt;br /&gt;
-你单身好多年，不但失去了与人缓慢相处的能力，甚至丧失了一见钟情的敏感。&lt;br /&gt;
-你总是把马区三定律挂在嘴边，不断地与人擦身而过。&lt;br /&gt;
-你只是与回忆一起沉睡，像James一样想象着Mary给自己写了一封信，信中叫他去曾经属于他们两人的special place。&lt;br /&gt;
-仔细想想，出口也可以是破事儿堆在一起，你从它们中间勉强拨开一条缝隙然后费力地挤过去。&lt;br /&gt;
-想太多，太做作，也许是我永远不会被人察觉的里人格。&lt;/p&gt;
-
-&lt;p&gt;但是还好，看到晴好的希望总是多过看到阴霾。&lt;br /&gt;
-ハクナマタタ，是小时候看动画片，学到的这么一句自我开解的古老咒语。&lt;br /&gt;
-远远看到非洲象群呼啸而过，踩着震天动地雷鸣般的步伐；遮天蔽日的大火烈鸟们在草原上留下影子；密密丛丛的长颈鹿队伍中有一个向外探视的目光。&lt;br /&gt;
-丛林里的生活，学到打洞与爬树并不是难事，饿的时候看到奇形怪状的虫子还会流口水。&lt;br /&gt;
-我们被推进了水泥钢筋构建的城市中的那一天起，咒语所描绘的图景就发生了微妙的变化。&lt;br /&gt;
-改变是一件好事，让我们总有新鲜的故事可听可讲。&lt;br /&gt;
-时间也是一个奇形怪状的存在，你在其中的时候总是体味不到乐趣。&lt;br /&gt;
-只有很久很久以后，再回溯的时候才能想起当时忽略的阳光晒过树叶间隙的形状和温度。&lt;br /&gt;
-所有的记忆都像是39演唱会上，全息的miku总会把彼时彼刻最迷人的一面流出来。&lt;br /&gt;
-不断从过去中汲取这种幸福感，带一点淡淡的忧伤，再一个猛子扎进这密不透风的当下的现实里去。&lt;/p&gt;
-
-&lt;p&gt;生命也许真的像一颗恒星那样，早就被宇宙的规则设定好演进的道路。&lt;br /&gt;
-从超新星爆发分子云坍缩形成原恒星，再到无时不刻消耗自己质量吹出恒星风的主序星，接下来是无比恢弘膨胀到极限的红巨星，最后变成暗淡无光逐渐冷却的白矮星。&lt;br /&gt;
-每当一个新的阶段来临的时候，宇宙赋予我们的本能总能让我们在这过程城中成长成为一个我们需要成为的人：热情，冷静，坚强，果敢甚至修电脑时的得心应手或者小清新时的安之若素。&lt;br /&gt;
-在这些阶段中，那些最美好的，就是我拥有的。&lt;br /&gt;
-下一步要怎么走，现在的我不知道，也不是什么丢脸的事情。&lt;br /&gt;
-以前追求做一个无所不知的技术宅，现在想想也是太单纯了。&lt;br /&gt;
-硬而且长得快的头发也好，略快的步伐也好，有一万个卖萌的办法，不要去选最曲折的那一条路。&lt;br /&gt;
-南方和北方，他人和自己，都是被安排着的一路前行。&lt;br /&gt;
-绿皮火车反正是停不下来了，在大箱子里，海内知己，天涯比邻，也是一件又小又好的事。&lt;/p&gt;
-
-&lt;p&gt;-EOF-&lt;/p&gt;
-
-    &lt;p&gt;&lt;a href=&quot;/deguchi/&quot;&gt;DEGUCHI&lt;/a&gt; was originally published by Insomnia at &lt;a href=&quot;&quot;&gt;零時寝子&lt;/a&gt; on November 11, 2013.&lt;/p&gt;
-  </content>
-</entry>
-
-
-<entry>
-  <title type="html"><![CDATA[Felix入门与实践]]></title>
- <link rel="alternate" type="text/html" href="/felix-tutorial/" />
-  <id>/felix-tutorial</id>
-  <published>2013-01-30T00:00:00+00:00</published>
-  <updated>2013-01-30T00:00:00+00:00</updated>
-  <author>
-    <name>Insomnia</name>
-    <uri></uri>
-    <email>insomniacdoll@gmail.com</email>
-  </author>
-  <content type="html">
-    &lt;p&gt;首先，我假设你已经了解OSGi相关的一些概念，如果没有，可以看看官方的文档。&lt;/p&gt;
-
-&lt;p&gt;我们从创建一个监听OSGi Service事件的bundle开始。这个小例子并不会包含太多的东西，只是打印出注册以及未注册的Service的详细信息而已。下一篇我才会开始介绍实现了Service的bundle，这次只是通过一个范例来加深对于创建bundle基础知识的理解。&lt;/p&gt;
-
-&lt;p&gt;OSGi框架通过与bundle唯一对应的BundleContext来访问一个bundle，而得到BundleContext必须实现BundleActivator接口。这个接口有两个方法，start()和stop()。当bundle的被start或者stop的时候，BundleContext将作为参数传入这两个方法，然后这两个方法才会被调用。下面的源代码是一个bundle，当然它实现了BundleContext接口，同时这个bundle添加了自身作为Service事件的监听器。&lt;/p&gt;
-
-&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-java&quot; data-lang=&quot;java&quot;&gt;&lt;span class=&quot;kn&quot;&gt;package&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;tutorial&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;example1&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;;&lt;/span&gt;
-
-&lt;span class=&quot;kn&quot;&gt;import&lt;/span&gt; &lt;span class=&quot;nn&quot;&gt;org.osgi.framework.BundleActivator&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;;&lt;/span&gt;
-&lt;span class=&quot;kn&quot;&gt;import&lt;/span&gt; &lt;span class=&quot;nn&quot;&gt;org.osgi.framework.BundleContext&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;;&lt;/span&gt;
-&lt;span class=&quot;kn&quot;&gt;import&lt;/span&gt; &lt;span class=&quot;nn&quot;&gt;org.osgi.framework.ServiceListener&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;;&lt;/span&gt;
-&lt;span class=&quot;kn&quot;&gt;import&lt;/span&gt; &lt;span class=&quot;nn&quot;&gt;org.osgi.framework.ServiceEvent&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;;&lt;/span&gt;
-
-&lt;span class=&quot;cm&quot;&gt;/**&lt;/span&gt;
-&lt;span class=&quot;cm&quot;&gt; * This class implements a simple bundle that utilizes the OSGi&lt;/span&gt;
-&lt;span class=&quot;cm&quot;&gt; * framework&amp;#39;s event mechanism to listen for service events. Upon&lt;/span&gt;
-&lt;span class=&quot;cm&quot;&gt; * receiving a service event, it prints out the event&amp;#39;s details.&lt;/span&gt;
-&lt;span class=&quot;cm&quot;&gt;**/&lt;/span&gt;
-&lt;span class=&quot;kd&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;kd&quot;&gt;class&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;Activator&lt;/span&gt; &lt;span class=&quot;kd&quot;&gt;implements&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;BundleActivator&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ServiceListener&lt;/span&gt;
-&lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
-    &lt;span class=&quot;cm&quot;&gt;/**&lt;/span&gt;
-&lt;span class=&quot;cm&quot;&gt;     * Implements BundleActivator.start(). Prints&lt;/span&gt;
-&lt;span class=&quot;cm&quot;&gt;     * a message and adds itself to the bundle context as a service&lt;/span&gt;
-&lt;span class=&quot;cm&quot;&gt;     * listener.&lt;/span&gt;
-&lt;span class=&quot;cm&quot;&gt;     * @param context the framework context for the bundle.&lt;/span&gt;
-&lt;span class=&quot;cm&quot;&gt;    **/&lt;/span&gt;
-    &lt;span class=&quot;kd&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;start&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;BundleContext&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;context&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;
-    &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
-        &lt;span class=&quot;n&quot;&gt;System&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;out&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;println&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&amp;quot;Starting to listen for service events.&amp;quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;);&lt;/span&gt;
-        &lt;span class=&quot;n&quot;&gt;context&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;addServiceListener&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;this&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;);&lt;/span&gt;
-    &lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
-
-    &lt;span class=&quot;cm&quot;&gt;/**&lt;/span&gt;
-&lt;span class=&quot;cm&quot;&gt;     * Implements BundleActivator.stop(). Prints&lt;/span&gt;
-&lt;span class=&quot;cm&quot;&gt;     * a message and removes itself from the bundle context as a&lt;/span&gt;
-&lt;span class=&quot;cm&quot;&gt;     * service listener.&lt;/span&gt;
-&lt;span class=&quot;cm&quot;&gt;     * @param context the framework context for the bundle.&lt;/span&gt;
-&lt;span class=&quot;cm&quot;&gt;    **/&lt;/span&gt;
-    &lt;span class=&quot;kd&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;stop&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;BundleContext&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;context&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;
-    &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
-        &lt;span class=&quot;n&quot;&gt;context&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;removeServiceListener&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;this&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;);&lt;/span&gt;
-        &lt;span class=&quot;n&quot;&gt;System&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;out&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;println&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&amp;quot;Stopped listening for service events.&amp;quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;);&lt;/span&gt;
-
-        &lt;span class=&quot;c1&quot;&gt;// Note: It is not required that we remove the listener here,&lt;/span&gt;
-        &lt;span class=&quot;c1&quot;&gt;// since the framework will do it automatically anyway.&lt;/span&gt;
-    &lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
-
-    &lt;span class=&quot;cm&quot;&gt;/**&lt;/span&gt;
-&lt;span class=&quot;cm&quot;&gt;     * Implements ServiceListener.serviceChanged().&lt;/span&gt;
-&lt;span class=&quot;cm&quot;&gt;     * Prints the details of any service event from the framework.&lt;/span&gt;
-&lt;span class=&quot;cm&quot;&gt;     * @param event the fired service event.&lt;/span&gt;
-&lt;span class=&quot;cm&quot;&gt;    **/&lt;/span&gt;
-    &lt;span class=&quot;kd&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;serviceChanged&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ServiceEvent&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;event&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;
-    &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
-        &lt;span class=&quot;n&quot;&gt;String&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;[]&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;objectClass&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;String&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;[])&lt;/span&gt;
-            &lt;span class=&quot;n&quot;&gt;event&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;getServiceReference&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;().&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;getProperty&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&amp;quot;objectClass&amp;quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;);&lt;/span&gt;
-
-        &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;event&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;getType&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;()&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;==&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ServiceEvent&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;REGISTERED&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;
-        &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
-            &lt;span class=&quot;n&quot;&gt;System&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;out&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;println&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;
-                &lt;span class=&quot;s&quot;&gt;&amp;quot;Ex1: Service of type &amp;quot;&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;objectClass&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;]&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&amp;quot; registered.&amp;quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;);&lt;/span&gt;
-        &lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
-        &lt;span class=&quot;k&quot;&gt;else&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;event&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;getType&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;()&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;==&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ServiceEvent&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;UNREGISTERING&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;
-        &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
-            &lt;span class=&quot;n&quot;&gt;System&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;out&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;println&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;
-                &lt;span class=&quot;s&quot;&gt;&amp;quot;Ex1: Service of type &amp;quot;&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;objectClass&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;]&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&amp;quot; unregistered.&amp;quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;);&lt;/span&gt;
-        &lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
-        &lt;span class=&quot;k&quot;&gt;else&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;event&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;getType&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;()&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;==&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ServiceEvent&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;MODIFIED&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;
-        &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
-            &lt;span class=&quot;n&quot;&gt;System&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;out&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;println&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;
-                &lt;span class=&quot;s&quot;&gt;&amp;quot;Ex1: Service of type &amp;quot;&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;objectClass&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;]&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&amp;quot; modified.&amp;quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;);&lt;/span&gt;
-        &lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
-    &lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
-&lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
-
-&lt;p&gt;完成bundle的Java代码之后还不够，我们还需要定义一个包含了meta-data信息的manifest文件，这样OSGi框架才能“操作”这个bundle。manifest文件要和编译好的Java Class打包成一个Jar，而这个Jar包实际上就是一个bundle。我们接下来创建一个名为manifest.mf的文件，内容如下：&lt;/p&gt;
-
-&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-html&quot; data-lang=&quot;html&quot;&gt;Bundle-Name: Service listener example
+<p>或者可以去固件目录下载。</p>
+
+<p>当前交叉编译系统的版本必须是ubuntu 12.04 lts，保证编译器版本为gcc 4.6，高版本编译的内核无法在开发板上运行。</p>
+
+<p>交叉编译环境准备：</p>
+
+<figure class="highlight"><pre><code class="language-sh" data-lang="sh"><span class="nb">sudo </span>apt-get <span class="nb">install </span>build-essential u-boot-tools uboot-mkimage
+<span class="nb">sudo </span>apt-get <span class="nb">install </span>gcc-arm-linux-gnueabihf gcc-arm-linux-gnueabi
+<span class="nb">sudo </span>apt-get <span class="nb">install </span>libusb-1.0-0 libusb-1.0-0-dev git wget fakeroot kernel-package zlib1g-dev
+<span class="nb">sudo </span>apt-get <span class="nb">install </span>libncurses5-dev</code></pre></figure>
+
+<p>其他包按照提示安装即可。</p>
+
+<p>编译选项打开HIDRAW：</p>
+
+<figure class="highlight"><pre><code class="language-sh" data-lang="sh">make <span class="nv">ARCH</span><span class="o">=</span>arm menuconfig</code></pre></figure>
+
+<p>编译：</p>
+
+<figure class="highlight"><pre><code class="language-sh" data-lang="sh">make <span class="nt">-j4</span> <span class="nv">ARCH</span><span class="o">=</span>arm <span class="nv">CROSS_COMPILE</span><span class="o">=</span>arm-none-linux-gnueabi- uImage modules</code></pre></figure>
+
+<p>安装modules：</p>
+
+<figure class="highlight"><pre><code class="language-sh" data-lang="sh">make <span class="nv">STRIP</span><span class="o">=</span>arm-none-linux-gnueabi-strip <span class="nv">INSTALL_MOD_PATH</span><span class="o">=</span>output <span class="nv">ARCH</span><span class="o">=</span>arm <span class="nv">INSTALL_MOD_STRIP</span><span class="o">=</span>1 modules_install</code></pre></figure>
+
+<p>然后把output目录下的modules替换到开发板的/lib/modules下，/arch/arm/boot/uImage替换到开发板/boot目录下，内核就升级完成了，重启即可。</p>
+
+<p>-EOF-</p>]]></content><author><name></name></author><category term="嵌入式" /><category term="ubuntu" /><category term="cubietruck" /><category term="cubieez" /><summary type="html"><![CDATA[cubietruck安装Cubieez/Lubuntu笔记]]></summary></entry><entry><title type="html">Felix入门与实践</title><link href="http://localhost:4000/2013/01/30/felix-tutorial.html" rel="alternate" type="text/html" title="Felix入门与实践" /><published>2013-01-30T00:00:00+08:00</published><updated>2013-01-30T00:00:00+08:00</updated><id>http://localhost:4000/2013/01/30/felix-tutorial</id><content type="html" xml:base="http://localhost:4000/2013/01/30/felix-tutorial.html"><![CDATA[<p>首先，我假设你已经了解OSGi相关的一些概念，如果没有，可以看看官方的文档。</p>
+
+<p>我们从创建一个监听OSGi Service事件的bundle开始。这个小例子并不会包含太多的东西，只是打印出注册以及未注册的Service的详细信息而已。下一篇我才会开始介绍实现了Service的bundle，这次只是通过一个范例来加深对于创建bundle基础知识的理解。</p>
+
+<p>OSGi框架通过与bundle唯一对应的BundleContext来访问一个bundle，而得到BundleContext必须实现BundleActivator接口。这个接口有两个方法，start()和stop()。当bundle的被start或者stop的时候，BundleContext将作为参数传入这两个方法，然后这两个方法才会被调用。下面的源代码是一个bundle，当然它实现了BundleContext接口，同时这个bundle添加了自身作为Service事件的监听器。</p>
+
+<figure class="highlight"><pre><code class="language-java" data-lang="java"><span class="kn">package</span> <span class="nn">tutorial.example1</span><span class="o">;</span>
+
+<span class="kn">import</span> <span class="nn">org.osgi.framework.BundleActivator</span><span class="o">;</span>
+<span class="kn">import</span> <span class="nn">org.osgi.framework.BundleContext</span><span class="o">;</span>
+<span class="kn">import</span> <span class="nn">org.osgi.framework.ServiceListener</span><span class="o">;</span>
+<span class="kn">import</span> <span class="nn">org.osgi.framework.ServiceEvent</span><span class="o">;</span>
+
+<span class="cm">/**
+ * This class implements a simple bundle that utilizes the OSGi
+ * framework's event mechanism to listen for service events. Upon
+ * receiving a service event, it prints out the event's details.
+**/</span>
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">Activator</span> <span class="kd">implements</span> <span class="nc">BundleActivator</span><span class="o">,</span> <span class="nc">ServiceListener</span>
+<span class="o">{</span>
+    <span class="cm">/**
+     * Implements BundleActivator.start(). Prints
+     * a message and adds itself to the bundle context as a service
+     * listener.
+     * @param context the framework context for the bundle.
+    **/</span>
+    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">start</span><span class="o">(</span><span class="nc">BundleContext</span> <span class="n">context</span><span class="o">)</span>
+    <span class="o">{</span>
+        <span class="nc">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">"Starting to listen for service events."</span><span class="o">);</span>
+        <span class="n">context</span><span class="o">.</span><span class="na">addServiceListener</span><span class="o">(</span><span class="k">this</span><span class="o">);</span>
+    <span class="o">}</span>
+
+    <span class="cm">/**
+     * Implements BundleActivator.stop(). Prints
+     * a message and removes itself from the bundle context as a
+     * service listener.
+     * @param context the framework context for the bundle.
+    **/</span>
+    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">stop</span><span class="o">(</span><span class="nc">BundleContext</span> <span class="n">context</span><span class="o">)</span>
+    <span class="o">{</span>
+        <span class="n">context</span><span class="o">.</span><span class="na">removeServiceListener</span><span class="o">(</span><span class="k">this</span><span class="o">);</span>
+        <span class="nc">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">"Stopped listening for service events."</span><span class="o">);</span>
+
+        <span class="c1">// Note: It is not required that we remove the listener here,</span>
+        <span class="c1">// since the framework will do it automatically anyway.</span>
+    <span class="o">}</span>
+
+    <span class="cm">/**
+     * Implements ServiceListener.serviceChanged().
+     * Prints the details of any service event from the framework.
+     * @param event the fired service event.
+    **/</span>
+    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">serviceChanged</span><span class="o">(</span><span class="nc">ServiceEvent</span> <span class="n">event</span><span class="o">)</span>
+    <span class="o">{</span>
+        <span class="nc">String</span><span class="o">[]</span> <span class="n">objectClass</span> <span class="o">=</span> <span class="o">(</span><span class="nc">String</span><span class="o">[])</span>
+            <span class="n">event</span><span class="o">.</span><span class="na">getServiceReference</span><span class="o">().</span><span class="na">getProperty</span><span class="o">(</span><span class="s">"objectClass"</span><span class="o">);</span>
+
+        <span class="k">if</span> <span class="o">(</span><span class="n">event</span><span class="o">.</span><span class="na">getType</span><span class="o">()</span> <span class="o">==</span> <span class="nc">ServiceEvent</span><span class="o">.</span><span class="na">REGISTERED</span><span class="o">)</span>
+        <span class="o">{</span>
+            <span class="nc">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span>
+                <span class="s">"Ex1: Service of type "</span> <span class="o">+</span> <span class="n">objectClass</span><span class="o">[</span><span class="mi">0</span><span class="o">]</span> <span class="o">+</span> <span class="s">" registered."</span><span class="o">);</span>
+        <span class="o">}</span>
+        <span class="k">else</span> <span class="nf">if</span> <span class="o">(</span><span class="n">event</span><span class="o">.</span><span class="na">getType</span><span class="o">()</span> <span class="o">==</span> <span class="nc">ServiceEvent</span><span class="o">.</span><span class="na">UNREGISTERING</span><span class="o">)</span>
+        <span class="o">{</span>
+            <span class="nc">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span>
+                <span class="s">"Ex1: Service of type "</span> <span class="o">+</span> <span class="n">objectClass</span><span class="o">[</span><span class="mi">0</span><span class="o">]</span> <span class="o">+</span> <span class="s">" unregistered."</span><span class="o">);</span>
+        <span class="o">}</span>
+        <span class="k">else</span> <span class="nf">if</span> <span class="o">(</span><span class="n">event</span><span class="o">.</span><span class="na">getType</span><span class="o">()</span> <span class="o">==</span> <span class="nc">ServiceEvent</span><span class="o">.</span><span class="na">MODIFIED</span><span class="o">)</span>
+        <span class="o">{</span>
+            <span class="nc">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span>
+                <span class="s">"Ex1: Service of type "</span> <span class="o">+</span> <span class="n">objectClass</span><span class="o">[</span><span class="mi">0</span><span class="o">]</span> <span class="o">+</span> <span class="s">" modified."</span><span class="o">);</span>
+        <span class="o">}</span>
+    <span class="o">}</span>
+<span class="o">}</span></code></pre></figure>
+
+<p>完成bundle的Java代码之后还不够，我们还需要定义一个包含了meta-data信息的manifest文件，这样OSGi框架才能“操作”这个bundle。manifest文件要和编译好的Java Class打包成一个Jar，而这个Jar包实际上就是一个bundle。我们接下来创建一个名为manifest.mf的文件，内容如下：</p>
+
+<figure class="highlight"><pre><code class="language-html" data-lang="html">Bundle-Name: Service listener example
 Bundle-Description: A bundle that displays messages at startup and when service events occur
 Bundle-Vendor: Apache Felix
 Bundle-Version: 1.0.0
 Bundle-Activator: tutorial.example1.Activator
-Import-Package: org.osgi.framework&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+Import-Package: org.osgi.framework</code></pre></figure>
 
-&lt;p&gt;上面的meta-data信息大部分只是为了维护方便，实际上只有Bundle-Activator属性以及Import-Package属性是OSGi框架必须的。Bundle-Activator属性为框架指明了实现了BundleActivator接口的类。当OSGi框架start某个bundle的时候，将创建一个该属性指定的类的实例，同时调用该实例的start()方法；同样框架stop该bundle的时候，实例的stop()方法将被调用。Import-Package属性指定了这个bundle所依赖的外部类。所有的bundle必须导入org.osgi.framework这个类，因为它包含了OSGi类的核心定义。所有的包依赖关系都会由OSGi框架来验证以及处理。（注意，manifest文件最后一行之后必须有一个回车符，否则最后一行的内容将会被框架忽略。）&lt;/p&gt;
+<p>上面的meta-data信息大部分只是为了维护方便，实际上只有Bundle-Activator属性以及Import-Package属性是OSGi框架必须的。Bundle-Activator属性为框架指明了实现了BundleActivator接口的类。当OSGi框架start某个bundle的时候，将创建一个该属性指定的类的实例，同时调用该实例的start()方法；同样框架stop该bundle的时候，实例的stop()方法将被调用。Import-Package属性指定了这个bundle所依赖的外部类。所有的bundle必须导入org.osgi.framework这个类，因为它包含了OSGi类的核心定义。所有的包依赖关系都会由OSGi框架来验证以及处理。（注意，manifest文件最后一行之后必须有一个回车符，否则最后一行的内容将会被框架忽略。）</p>
 
-&lt;p&gt;然后就可以开始编译源代码了，我们需要把felix.jar添加到classpath中（Felix的bin目录中可以找到这个jar包），然后在命令行中运行：&lt;/p&gt;
+<p>然后就可以开始编译源代码了，我们需要把felix.jar添加到classpath中（Felix的bin目录中可以找到这个jar包），然后在命令行中运行：</p>
 
-&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-sh&quot; data-lang=&quot;sh&quot;&gt;javac -d c:&lt;span class=&quot;se&quot;&gt;\c&lt;/span&gt;lasses *.java&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+<figure class="highlight"><pre><code class="language-sh" data-lang="sh">javac <span class="nt">-d</span> c:<span class="se">\c</span>lasses <span class="k">*</span>.java</code></pre></figure>
 
-&lt;p&gt;上面的命令将会编译classes目录下所有的源代码，并将class二进制字节码输出到指定的子文件夹tutorial\example1中。编译完成之后，就可以把class文件和之前写好的bundle的manifest文件打包成jar。接着在命令行中运行：&lt;/p&gt;
+<p>上面的命令将会编译classes目录下所有的源代码，并将class二进制字节码输出到指定的子文件夹tutorial\example1中。编译完成之后，就可以把class文件和之前写好的bundle的manifest文件打包成jar。接着在命令行中运行：</p>
 
-&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-sh&quot; data-lang=&quot;sh&quot;&gt;jar cfm example1.jar manifest.mf -C c:&lt;span class=&quot;se&quot;&gt;\c&lt;/span&gt;lasses tutorial&lt;span class=&quot;se&quot;&gt;\e&lt;/span&gt;xample1&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+<figure class="highlight"><pre><code class="language-sh" data-lang="sh">jar cfm example1.jar manifest.mf <span class="nt">-C</span> c:<span class="se">\c</span>lasses tutorial<span class="se">\e</span>xample1</code></pre></figure>
 
-&lt;p&gt;一个打包好的bundle就到手了，用Felix的Shell就可以安装并运行这个bundle，比如：&lt;/p&gt;
+<p>一个打包好的bundle就到手了，用Felix的Shell就可以安装并运行这个bundle，比如：</p>
 
-&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-sh&quot; data-lang=&quot;sh&quot;&gt;start file:/c:/tutorial/example1.jar&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+<figure class="highlight"><pre><code class="language-sh" data-lang="sh">start file:/c:/tutorial/example1.jar </code></pre></figure>
 
-&lt;p&gt;上面的命令会自动安装并start这个bundle。当然我们也可以手动安装并且运行。Felix的Shell有install和start两个命令，分别运行一下就OK。另外stop命令可以stop指定的bundle，而shutdown则是关闭整个Felix环境。&lt;/p&gt;
+<p>上面的命令会自动安装并start这个bundle。当然我们也可以手动安装并且运行。Felix的Shell有install和start两个命令，分别运行一下就OK。另外stop命令可以stop指定的bundle，而shutdown则是关闭整个Felix环境。</p>
 
-&lt;p&gt;-EOF-&lt;/p&gt;
+<p>-EOF-</p>]]></content><author><name></name></author><category term="felix" /><category term="OSGi" /><category term="java" /><category term="service" /><summary type="html"><![CDATA[Felix入门与实践]]></summary></entry><entry><title type="html">Windows下编译OpenJDK7 笔记</title><link href="http://localhost:4000/2012/11/19/compile-jdk7-under-windows.html" rel="alternate" type="text/html" title="Windows下编译OpenJDK7 笔记" /><published>2012-11-19T00:00:00+08:00</published><updated>2012-11-19T00:00:00+08:00</updated><id>http://localhost:4000/2012/11/19/compile-jdk7-under-windows</id><content type="html" xml:base="http://localhost:4000/2012/11/19/compile-jdk7-under-windows.html"><![CDATA[<h3 id="0-系统需求">0. 系统需求</h3>
 
-    &lt;p&gt;&lt;a href=&quot;/felix-tutorial/&quot;&gt;Felix入门与实践&lt;/a&gt; was originally published by Insomnia at &lt;a href=&quot;&quot;&gt;零時寝子&lt;/a&gt; on January 30, 2013.&lt;/p&gt;
-  </content>
-</entry>
+<p>Windows XP SP3 / Windows 7 （强烈推荐用英文版系统进行构建，原因后详）</p>
 
+<h3 id="1-所需软件">1. 所需软件</h3>
 
-<entry>
-  <title type="html"><![CDATA[Windows下编译OpenJDK7 笔记]]></title>
- <link rel="alternate" type="text/html" href="/compile-jdk7-under-windows/" />
-  <id>/compile-jdk7-under-windows</id>
-  <published>2012-11-19T00:00:00+00:00</published>
-  <updated>2012-11-19T00:00:00+00:00</updated>
-  <author>
-    <name>Insomnia</name>
-    <uri></uri>
-    <email>insomniacdoll@gmail.com</email>
-  </author>
-  <content type="html">
-    &lt;h3 id=&quot;section&quot;&gt;0. 系统需求&lt;/h3&gt;
-
-&lt;p&gt;Windows XP SP3 / Windows 7 （强烈推荐用英文版系统进行构建，原因后详）&lt;/p&gt;
-
-&lt;h3 id=&quot;section-1&quot;&gt;1. 所需软件&lt;/h3&gt;
-
-&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-sh&quot; data-lang=&quot;sh&quot;&gt;Cygwin
+<figure class="highlight"><pre><code class="language-sh" data-lang="sh">Cygwin
 
 Sun JDK 1.6 u14以上
 
 Microsoft DirecxX SDK
 
-Microsoft Visual Studio C++ &lt;span class=&quot;m&quot;&gt;2010&lt;/span&gt; （正式版或者Express版均可）
+Microsoft Visual Studio C++ 2010 （正式版或者Express版均可）
 
 Apache Ant 1.7.1以上
 
@@ -585,272 +560,269 @@ Freetype-2.3.5-1
 
 openjdk-7-fcs-src-b147-27_jun_2011.zip
 
-Vim（可选，推荐编辑器）&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+Vim（可选，推荐编辑器）</code></pre></figure>
 
-&lt;h3 id=&quot;section-2&quot;&gt;2.构建步骤&lt;/h3&gt;
+<h3 id="2构建步骤">2.构建步骤</h3>
 
-&lt;p&gt;&lt;strong&gt;&lt;em&gt;以下涉及安装软件的步骤，都建议将软件安装到没有空格非中文的路径，且安装的目录名精简一些。&lt;/em&gt;&lt;/strong&gt;&lt;/p&gt;
+<p><strong><em>以下涉及安装软件的步骤，都建议将软件安装到没有空格非中文的路径，且安装的目录名精简一些。</em></strong></p>
 
-&lt;p&gt;(1) 首先安装Cygwin，所需的包如下所示：&lt;/p&gt;
+<p>(1) 首先安装Cygwin，所需的包如下所示：</p>
 
-&lt;table rules=&quot;groups&quot;&gt;
-  &lt;thead&gt;
-    &lt;tr&gt;
-      &lt;th style=&quot;text-align: left&quot;&gt;文件名&lt;/th&gt;
-      &lt;th style=&quot;text-align: center&quot;&gt;分类&lt;/th&gt;
-      &lt;th style=&quot;text-align: right&quot;&gt;包&lt;/th&gt;
-      &lt;th style=&quot;text-align: right&quot;&gt;描述&lt;/th&gt;
-    &lt;/tr&gt;
-  &lt;/thead&gt;
-  &lt;tbody&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;ar.exe&lt;/td&gt;
-      &lt;td style=&quot;text-align: center&quot;&gt;Devel&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;binutils&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;The GNU assembler, linker and binary utilities&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;make.exe&lt;/td&gt;
-      &lt;td style=&quot;text-align: center&quot;&gt;Devel&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;make&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;The GNU version of the ‘make’ utility built for CYGWIN&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;m4.exe&lt;/td&gt;
-      &lt;td style=&quot;text-align: center&quot;&gt;Interpreters&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;m4&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;GNU implementation of the traditional Unix macro processor&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;cpio.exe&lt;/td&gt;
-      &lt;td style=&quot;text-align: center&quot;&gt;Utils&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;cpio&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;A program to manage archives of files&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;gawk.exe&lt;/td&gt;
-      &lt;td style=&quot;text-align: center&quot;&gt;Base&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;awk&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;Pattern-directed scanning and processing language&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;file.exe&lt;/td&gt;
-      &lt;td style=&quot;text-align: center&quot;&gt;Utils&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;file&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;Determines file type using ‘magic’ numbers&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;zip.exe&lt;/td&gt;
-      &lt;td style=&quot;text-align: center&quot;&gt;Archive&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;zip&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;Package and compress (archive) files&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;unzip.exe&lt;/td&gt;
-      &lt;td style=&quot;text-align: center&quot;&gt;Archive&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;unzip&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;Extract compressed files in a ZIP archive&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;free.exe&lt;/td&gt;
-      &lt;td style=&quot;text-align: center&quot;&gt;System&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;procps&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;Display amount of free and used memory in the system&lt;/td&gt;
-    &lt;/tr&gt;
-  &lt;/tbody&gt;
-&lt;/table&gt;
+<table rules="groups">
+  <thead>
+    <tr>
+      <th style="text-align: left">文件名</th>
+      <th style="text-align: center">分类</th>
+      <th style="text-align: right">包</th>
+      <th style="text-align: right">描述</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="text-align: left">ar.exe</td>
+      <td style="text-align: center">Devel</td>
+      <td style="text-align: right">binutils</td>
+      <td style="text-align: right">The GNU assembler, linker and binary utilities</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">make.exe</td>
+      <td style="text-align: center">Devel</td>
+      <td style="text-align: right">make</td>
+      <td style="text-align: right">The GNU version of the ‘make’ utility built for CYGWIN</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">m4.exe</td>
+      <td style="text-align: center">Interpreters</td>
+      <td style="text-align: right">m4</td>
+      <td style="text-align: right">GNU implementation of the traditional Unix macro processor</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">cpio.exe</td>
+      <td style="text-align: center">Utils</td>
+      <td style="text-align: right">cpio</td>
+      <td style="text-align: right">A program to manage archives of files</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">gawk.exe</td>
+      <td style="text-align: center">Base</td>
+      <td style="text-align: right">awk</td>
+      <td style="text-align: right">Pattern-directed scanning and processing language</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">file.exe</td>
+      <td style="text-align: center">Utils</td>
+      <td style="text-align: right">file</td>
+      <td style="text-align: right">Determines file type using ‘magic’ numbers</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">zip.exe</td>
+      <td style="text-align: center">Archive</td>
+      <td style="text-align: right">zip</td>
+      <td style="text-align: right">Package and compress (archive) files</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">unzip.exe</td>
+      <td style="text-align: center">Archive</td>
+      <td style="text-align: right">unzip</td>
+      <td style="text-align: right">Extract compressed files in a ZIP archive</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">free.exe</td>
+      <td style="text-align: center">System</td>
+      <td style="text-align: right">procps</td>
+      <td style="text-align: right">Display amount of free and used memory in the system</td>
+    </tr>
+  </tbody>
+</table>
 
-&lt;p&gt;需要注意的是，安装的make.exe为3.82版，导致编译不能成功，需要从cygwin网站上下载3.81版本并覆盖到bin目录。也可以下载源码之后自己编译一个（需要gcc包）。最后将cygwin的bin目录添加到PATH环境变量。&lt;/p&gt;
+<p>需要注意的是，安装的make.exe为3.82版，导致编译不能成功，需要从cygwin网站上下载3.81版本并覆盖到bin目录。也可以下载源码之后自己编译一个（需要gcc包）。最后将cygwin的bin目录添加到PATH环境变量。</p>
 
-&lt;p&gt;(2) 安装JDK6，版本需要u14以上（官方文档中称作Bootrap JDK），我采用的是u31版本。建立ALT_BOOTDIR和ALT_JDK_IMPORT_PATH环境变量，指向JDK的目录。注意不要设置JAVA_HOME和CLASSPATH环境变量。&lt;/p&gt;
+<p>(2) 安装JDK6，版本需要u14以上（官方文档中称作Bootrap JDK），我采用的是u31版本。建立ALT_BOOTDIR和ALT_JDK_IMPORT_PATH环境变量，指向JDK的目录。注意不要设置JAVA_HOME和CLASSPATH环境变量。</p>
 
-&lt;p&gt;(3) 安装Apache Ant，版本1.7.1以上，我采用的是1.8.2。建立ANT_HOME环境变量。&lt;/p&gt;
+<p>(3) 安装Apache Ant，版本1.7.1以上，我采用的是1.8.2。建立ANT_HOME环境变量。</p>
 
-&lt;p&gt;(4) 安装Freetype-2.3.5-1，建立ALT_FREETYPE_LIB_PATH 和ALT_FREETYPE_HEADERS_PATH环境变量，分别指向lib目录和include目录。将bin目录下的freetype6.dll和zlib1.dll复制到lib目录下。&lt;/p&gt;
+<p>(4) 安装Freetype-2.3.5-1，建立ALT_FREETYPE_LIB_PATH 和ALT_FREETYPE_HEADERS_PATH环境变量，分别指向lib目录和include目录。将bin目录下的freetype6.dll和zlib1.dll复制到lib目录下。</p>
 
-&lt;p&gt;(5) 安装DirectX SDK。强烈建议此步在安装Visual Stuido 2010 (Express)之前进行，否则有可能DirectX SDK无法正常安装成功。建立ALT_DXSDK_PATH环境变量，指向安装目录。&lt;/p&gt;
+<p>(5) 安装DirectX SDK。强烈建议此步在安装Visual Stuido 2010 (Express)之前进行，否则有可能DirectX SDK无法正常安装成功。建立ALT_DXSDK_PATH环境变量，指向安装目录。</p>
 
-&lt;p&gt;(6) 安装Microsoft Visual Studio C++ 2010 ，我采用的是Express版本（免费）。安装过程中会自动安装Windows SDK，且不能指定路径，在C:\Program Files\下。建立ALT_COMPILER_PATH 环境变量，指向VC++的bin目录。同时用以下命令将Windows SDK的目录转换为short路径（需要安装cygwin）：&lt;/p&gt;
+<p>(6) 安装Microsoft Visual Studio C++ 2010 ，我采用的是Express版本（免费）。安装过程中会自动安装Windows SDK，且不能指定路径，在C:\Program Files\下。建立ALT_COMPILER_PATH 环境变量，指向VC++的bin目录。同时用以下命令将Windows SDK的目录转换为short路径（需要安装cygwin）：</p>
 
-&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-sh&quot; data-lang=&quot;sh&quot;&gt;Cygpath –s –m “C:&lt;span class=&quot;se&quot;&gt;\P&lt;/span&gt;rogram Files&lt;span class=&quot;se&quot;&gt;\M&lt;/span&gt;icrosoft SDKs&lt;span class=&quot;se&quot;&gt;\W&lt;/span&gt;indows&lt;span class=&quot;se&quot;&gt;\v&lt;/span&gt;7.0A”&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+<figure class="highlight"><pre><code class="language-sh" data-lang="sh">Cygpath –s –m “C:<span class="se">\P</span>rogram Files<span class="se">\M</span>icrosoft SDKs<span class="se">\W</span>indows<span class="se">\v</span>7.0A”</code></pre></figure>
 
-&lt;p&gt;之后建立WINDOWSSDKDIR 环境变量，指向该short路径。&lt;/p&gt;
+<p>之后建立WINDOWSSDKDIR 环境变量，指向该short路径。</p>
 
-&lt;p&gt;将WINDOWSSDKDIR 下的lib目录和VC++下的lib目录添加到LIB环境变量。&lt;/p&gt;
+<p>将WINDOWSSDKDIR 下的lib目录和VC++下的lib目录添加到LIB环境变量。</p>
 
-&lt;p&gt;将WINDOWSSDKDIR 下的include目录和VC++下的include目录添加到INCLUDE环境变量。&lt;/p&gt;
+<p>将WINDOWSSDKDIR 下的include目录和VC++下的include目录添加到INCLUDE环境变量。</p>
 
-&lt;p&gt;去下载一个msvcr100.dll，并建立ALT_MSVCRNN_DLL_PATH 环境变量指向该文件所在的目录。如果你安装了Visual Studio C++ 2010，那么在你的系统中应该能找到这个文件，但是我用系统中自带的这个文件编译出的JDK不能正常运行，用下载的替换之后才可以。&lt;/p&gt;
+<p>去下载一个msvcr100.dll，并建立ALT_MSVCRNN_DLL_PATH 环境变量指向该文件所在的目录。如果你安装了Visual Studio C++ 2010，那么在你的系统中应该能找到这个文件，但是我用系统中自带的这个文件编译出的JDK不能正常运行，用下载的替换之后才可以。</p>
 
-&lt;p&gt;(7) 解压openjdk-7-fcs-src-b147-27_jun_2011.zip，下载jaxp-1_4_5-unittests.zip、jaxp145_01.zip、jdk7-jaf-2010_08_19.zip、jdk7-jaxws2_2_4-b03-2011_05_27.zip四个文件放在openjdk\java\devtools\share\jdk7-drops目录下。并建立ALT_DROPS_DIR 环境变量指向该目录。&lt;/p&gt;
+<p>(7) 解压openjdk-7-fcs-src-b147-27_jun_2011.zip，下载jaxp-1_4_5-unittests.zip、jaxp145_01.zip、jdk7-jaf-2010_08_19.zip、jdk7-jaxws2_2_4-b03-2011_05_27.zip四个文件放在openjdk\java\devtools\share\jdk7-drops目录下。并建立ALT_DROPS_DIR 环境变量指向该目录。</p>
 
-&lt;p&gt;(8) 完善并检查环境变量，我写了一个批处理来进行环境变量设置：&lt;/p&gt;
+<p>(8) 完善并检查环境变量，我写了一个批处理来进行环境变量设置：</p>
 
-&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-sh&quot; data-lang=&quot;sh&quot;&gt;SET &lt;span class=&quot;nv&quot;&gt;VSINSTALLDIR&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;C:/PROGRA~2/MICROS~1.0
-SET &lt;span class=&quot;nv&quot;&gt;WINDOWSSDKDIR&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;D:/jdkBuild/sdk
-SET &lt;span class=&quot;nv&quot;&gt;ALT_BOOTDIR&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;D:/jdkBuild/JDK16~1.0_X
-SET &lt;span class=&quot;nv&quot;&gt;ALT_JDK_IMPORT_PATH&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;D:/jdkBuild/JDK16~1.0_X
-SET &lt;span class=&quot;nv&quot;&gt;ANT_HOME&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;D:/jdkBuild/APACHE~1.4
-SET &lt;span class=&quot;nv&quot;&gt;ALT_MSVCRNN_DLL_PATH&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;D:/jdkBuild/msvcr100
-SET &lt;span class=&quot;nv&quot;&gt;ALT_DXSDK_PATH&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;D:/jdkBuild/msdxsdk
-SET &lt;span class=&quot;nv&quot;&gt;ALT_FREETYPE_HEADERS_PATH&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;D:/jdkBuild/freetype/include
-SET &lt;span class=&quot;nv&quot;&gt;ALT_FREETYPE_LIB_PATH&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;D:/jdkBuild/freetype/lib
-SET &lt;span class=&quot;nv&quot;&gt;ALT_COMPILER_PATH&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;%VSINSTALLDIR%/VC/bin/
-SET &lt;span class=&quot;nv&quot;&gt;ALT_DROPS_DIR&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; D:/jdkBuild/openjdk/java/devtools/share/jdk7-drops
-SET &lt;span class=&quot;nv&quot;&gt;PATH&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;%WINDOWSSDKDIR%/Bin/NETFX4~1.0TO&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;%WINDOWSSDKDIR%/Bin&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;%VSINSTALLDIR%/VC/bin&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;%VSINSTALLDIR%/Common7/IDE&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;E:/cygwin/bin&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;%PATH%
-SET &lt;span class=&quot;nv&quot;&gt;INCLUDE&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;%VSINSTALLDIR%/VC/INCLUDE&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;D:/jdkBuild/sdk/INCLUDE
-SET &lt;span class=&quot;nv&quot;&gt;LIB&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;%VSINSTALLDIR%/VC/Lib&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;D:/jdkBuild/sdk/Lib
-SET &lt;span class=&quot;nv&quot;&gt;ALT_CC_VER&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; 16.00.30319.01
-SET &lt;span class=&quot;nv&quot;&gt;ALT_MSC_VER_RAW&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; 16.00.30319.01&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+<figure class="highlight"><pre><code class="language-sh" data-lang="sh">SET <span class="nv">VSINSTALLDIR</span><span class="o">=</span>C:/PROGRA~2/MICROS~1.0
+SET <span class="nv">WINDOWSSDKDIR</span><span class="o">=</span>D:/jdkBuild/sdk
+SET <span class="nv">ALT_BOOTDIR</span><span class="o">=</span>D:/jdkBuild/JDK16~1.0_X
+SET <span class="nv">ALT_JDK_IMPORT_PATH</span><span class="o">=</span>D:/jdkBuild/JDK16~1.0_X
+SET <span class="nv">ANT_HOME</span><span class="o">=</span>D:/jdkBuild/APACHE~1.4
+SET <span class="nv">ALT_MSVCRNN_DLL_PATH</span><span class="o">=</span>D:/jdkBuild/msvcr100
+SET <span class="nv">ALT_DXSDK_PATH</span><span class="o">=</span>D:/jdkBuild/msdxsdk
+SET <span class="nv">ALT_FREETYPE_HEADERS_PATH</span><span class="o">=</span>D:/jdkBuild/freetype/include
+SET <span class="nv">ALT_FREETYPE_LIB_PATH</span><span class="o">=</span>D:/jdkBuild/freetype/lib
+SET <span class="nv">ALT_COMPILER_PATH</span><span class="o">=</span>%VSINSTALLDIR%/VC/bin/
+SET <span class="nv">ALT_DROPS_DIR</span><span class="o">=</span> D:/jdkBuild/openjdk/java/devtools/share/jdk7-drops
+SET <span class="nv">PATH</span><span class="o">=</span>%WINDOWSSDKDIR%/Bin/NETFX4~1.0TO<span class="p">;</span>%WINDOWSSDKDIR%/Bin<span class="p">;</span>%VSINSTALLDIR%/VC/bin<span class="p">;</span>%VSINSTALLDIR%/Common7/IDE<span class="p">;</span>E:/cygwin/bin<span class="p">;</span>%PATH%
+SET <span class="nv">INCLUDE</span><span class="o">=</span>%VSINSTALLDIR%/VC/INCLUDE<span class="p">;</span>D:/jdkBuild/sdk/INCLUDE
+SET <span class="nv">LIB</span><span class="o">=</span>%VSINSTALLDIR%/VC/Lib<span class="p">;</span>D:/jdkBuild/sdk/Lib
+SET ALT_CC_VER <span class="o">=</span> 16.00.30319.01
+SET ALT_MSC_VER_RAW <span class="o">=</span> 16.00.30319.01</code></pre></figure>
 
-&lt;p&gt;其中带~的路径均为cygpath所转化所得的short路径。&lt;/p&gt;
+<p>其中带~的路径均为cygpath所转化所得的short路径。</p>
 
-&lt;p&gt;建议路径中的分割符采用斜线（/）而不是反斜线（\），Windows资源管理器的默认显示路径是后者。如果采用反斜线，有可能在编译过程中某些脚本识别不出路径，从而出错。&lt;/p&gt;
+<p>建议路径中的分割符采用斜线（/）而不是反斜线（\），Windows资源管理器的默认显示路径是后者。如果采用反斜线，有可能在编译过程中某些脚本识别不出路径，从而出错。</p>
 
-&lt;p&gt;同时cygwin的bin目录在PATH中的位置应该在系统的System32目录之前（脚本中会用到cygwin的find命令，否则会用windows的find命令导致出错）。而VC++的bin目录应该在cygwin之前（同样的原因，编译需要用到的是VC++中的link.exe）。&lt;/p&gt;
+<p>同时cygwin的bin目录在PATH中的位置应该在系统的System32目录之前（脚本中会用到cygwin的find命令，否则会用windows的find命令导致出错）。而VC++的bin目录应该在cygwin之前（同样的原因，编译需要用到的是VC++中的link.exe）。</p>
 
-&lt;p&gt;(9) 修改文件。&lt;/p&gt;
+<p>(9) 修改文件。</p>
 
-&lt;p&gt;&lt;strong&gt;文件： /jdk/make/sun/font/Makefile:&lt;/strong&gt;
-&lt;strong&gt;第126行：&lt;/strong&gt;&lt;/p&gt;
+<p><strong>文件： /jdk/make/sun/font/Makefile:</strong>
+<strong>第126行：</strong></p>
 
-&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-sh&quot; data-lang=&quot;sh&quot;&gt;&lt;span class=&quot;nv&quot;&gt;FREETYPE_LIB&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;$(&lt;/span&gt;LIB_LOCATION&lt;span class=&quot;k&quot;&gt;)&lt;/span&gt;/&lt;span class=&quot;k&quot;&gt;$(&lt;/span&gt;LIB_PREFIX&lt;span class=&quot;k&quot;&gt;)&lt;/span&gt;freetype.&lt;span class=&quot;k&quot;&gt;$(&lt;/span&gt;LIBRARY_SUFFIX&lt;span class=&quot;k&quot;&gt;)&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+<figure class="highlight"><pre><code class="language-sh" data-lang="sh">FREETYPE_LIB <span class="o">=</span><span class="si">$(</span>LIB_LOCATION<span class="si">)</span>/<span class="si">$(</span>LIB_PREFIX<span class="si">)</span>freetype.<span class="si">$(</span>LIBRARY_SUFFIX<span class="si">)</span></code></pre></figure>
 
-&lt;p&gt;改为：&lt;/p&gt;
+<p>改为：</p>
 
-&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-sh&quot; data-lang=&quot;sh&quot;&gt;&lt;span class=&quot;nv&quot;&gt;FREETYPE_LIB&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;$(&lt;/span&gt;LIB_LOCATION&lt;span class=&quot;k&quot;&gt;)&lt;/span&gt;/&lt;span class=&quot;k&quot;&gt;$(&lt;/span&gt;LIB_PREFIX&lt;span class=&quot;k&quot;&gt;)&lt;/span&gt;freetype6.&lt;span class=&quot;k&quot;&gt;$(&lt;/span&gt;LIBRARY_SUFFIX&lt;span class=&quot;k&quot;&gt;)&lt;/span&gt; 
-&lt;span class=&quot;nv&quot;&gt;ZLIB1_LIB&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;$(&lt;/span&gt;LIB_LOCATION&lt;span class=&quot;k&quot;&gt;)&lt;/span&gt;/&lt;span class=&quot;k&quot;&gt;$(&lt;/span&gt;LIB_PREFIX&lt;span class=&quot;k&quot;&gt;)&lt;/span&gt;zlib1.&lt;span class=&quot;k&quot;&gt;$(&lt;/span&gt;LIBRARY_SUFFIX&lt;span class=&quot;k&quot;&gt;)&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+<figure class="highlight"><pre><code class="language-sh" data-lang="sh">FREETYPE_LIB <span class="o">=</span><span class="si">$(</span>LIB_LOCATION<span class="si">)</span>/<span class="si">$(</span>LIB_PREFIX<span class="si">)</span>freetype6.<span class="si">$(</span>LIBRARY_SUFFIX<span class="si">)</span> 
+ZLIB1_LIB <span class="o">=</span><span class="si">$(</span>LIB_LOCATION<span class="si">)</span>/<span class="si">$(</span>LIB_PREFIX<span class="si">)</span>zlib1.<span class="si">$(</span>LIBRARY_SUFFIX<span class="si">)</span></code></pre></figure>
 
-&lt;p&gt;&lt;strong&gt;第137，138行：&lt;/strong&gt;&lt;/p&gt;
+<p><strong>第137，138行：</strong></p>
 
-&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-sh&quot; data-lang=&quot;sh&quot;&gt;&lt;span class=&quot;k&quot;&gt;$(&lt;/span&gt;FREETYPE_LIB&lt;span class=&quot;k&quot;&gt;)&lt;/span&gt;:
+<figure class="highlight"><pre><code class="language-sh" data-lang="sh"><span class="si">$(</span>FREETYPE_LIB<span class="si">)</span>:
  
-&lt;span class=&quot;k&quot;&gt;$(&lt;/span&gt;CP&lt;span class=&quot;k&quot;&gt;)$(&lt;/span&gt;FREETYPE_LIB_PATH&lt;span class=&quot;k&quot;&gt;)&lt;/span&gt;/&lt;span class=&quot;k&quot;&gt;$(&lt;/span&gt;LIB_PREFIX&lt;span class=&quot;k&quot;&gt;)&lt;/span&gt;freetype.&lt;span class=&quot;k&quot;&gt;$(&lt;/span&gt;LIBRARY_SUFFIX&lt;span class=&quot;k&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;$@&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+<span class="si">$(</span>CP<span class="si">)$(</span>FREETYPE_LIB_PATH<span class="si">)</span>/<span class="si">$(</span>LIB_PREFIX<span class="si">)</span>freetype.<span class="si">$(</span>LIBRARY_SUFFIX<span class="si">)</span> <span class="nv">$@</span></code></pre></figure>
 
-&lt;p&gt;改为：&lt;/p&gt;
+<p>改为：</p>
 
-&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-sh&quot; data-lang=&quot;sh&quot;&gt;&lt;span class=&quot;k&quot;&gt;$(&lt;/span&gt;FREETYPE_LIB&lt;span class=&quot;k&quot;&gt;)&lt;/span&gt;: &lt;span class=&quot;k&quot;&gt;$(&lt;/span&gt;ZLIB1_LIB&lt;span class=&quot;k&quot;&gt;)&lt;/span&gt;
+<figure class="highlight"><pre><code class="language-sh" data-lang="sh"><span class="si">$(</span>FREETYPE_LIB<span class="si">)</span>: <span class="si">$(</span>ZLIB1_LIB<span class="si">)</span>
  
-&lt;span class=&quot;k&quot;&gt;$(&lt;/span&gt;CP&lt;span class=&quot;k&quot;&gt;)$(&lt;/span&gt;FREETYPE_LIB_PATH&lt;span class=&quot;k&quot;&gt;)&lt;/span&gt;/&lt;span class=&quot;k&quot;&gt;$(&lt;/span&gt;LIB_PREFIX&lt;span class=&quot;k&quot;&gt;)&lt;/span&gt;freetype6.&lt;span class=&quot;k&quot;&gt;$(&lt;/span&gt;LIBRARY_SUFFIX&lt;span class=&quot;k&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;$@&lt;/span&gt;
+<span class="si">$(</span>CP<span class="si">)$(</span>FREETYPE_LIB_PATH<span class="si">)</span>/<span class="si">$(</span>LIB_PREFIX<span class="si">)</span>freetype6.<span class="si">$(</span>LIBRARY_SUFFIX<span class="si">)</span> <span class="nv">$@</span>
  
-&lt;span class=&quot;k&quot;&gt;$(&lt;/span&gt;install-module-file&lt;span class=&quot;k&quot;&gt;)&lt;/span&gt;
+<span class="si">$(</span>install-module-file<span class="si">)</span>
  
-&lt;span class=&quot;k&quot;&gt;$(&lt;/span&gt;ZLIB1_LIB&lt;span class=&quot;k&quot;&gt;)&lt;/span&gt;:
+<span class="si">$(</span>ZLIB1_LIB<span class="si">)</span>:
  
-&lt;span class=&quot;k&quot;&gt;$(&lt;/span&gt;CP&lt;span class=&quot;k&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;$(&lt;/span&gt;FREETYPE_LIB_PATH&lt;span class=&quot;k&quot;&gt;)&lt;/span&gt;/&lt;span class=&quot;k&quot;&gt;$(&lt;/span&gt;LIB_PREFIX&lt;span class=&quot;k&quot;&gt;)&lt;/span&gt;zlib1.&lt;span class=&quot;k&quot;&gt;$(&lt;/span&gt;LIBRARY_SUFFIX&lt;span class=&quot;k&quot;&gt;)&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;$@&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+<span class="si">$(</span>CP<span class="si">)</span> <span class="si">$(</span>FREETYPE_LIB_PATH<span class="si">)</span>/<span class="si">$(</span>LIB_PREFIX<span class="si">)</span>zlib1.<span class="si">$(</span>LIBRARY_SUFFIX<span class="si">)</span><span class="nv">$@</span></code></pre></figure>
 
-&lt;p&gt;&lt;strong&gt;文件：jdk/make/tools/freetypecheck/Makefile&lt;/strong&gt;&lt;/p&gt;
+<p><strong>文件：jdk/make/tools/freetypecheck/Makefile</strong></p>
 
-&lt;p&gt;&lt;strong&gt;第41行：&lt;/strong&gt;&lt;/p&gt;
+<p><strong>第41行：</strong></p>
 
-&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-sh&quot; data-lang=&quot;sh&quot;&gt;&lt;span class=&quot;nv&quot;&gt;FREETYPE_DLL&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;$(&lt;/span&gt;FREETYPE_LIB_PATH&lt;span class=&quot;k&quot;&gt;)&lt;/span&gt;/freetype.dll&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+<figure class="highlight"><pre><code class="language-sh" data-lang="sh">FREETYPE_DLL <span class="o">=</span><span class="si">$(</span>FREETYPE_LIB_PATH<span class="si">)</span>/freetype.dll</code></pre></figure>
 
-&lt;p&gt;改为：&lt;/p&gt;
+<p>改为：</p>
 
-&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-sh&quot; data-lang=&quot;sh&quot;&gt;&lt;span class=&quot;nv&quot;&gt;FREETYPE_DLL&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;$(&lt;/span&gt;FREETYPE_LIB_PATH&lt;span class=&quot;k&quot;&gt;)&lt;/span&gt;/freetype6.dll
+<figure class="highlight"><pre><code class="language-sh" data-lang="sh">FREETYPE_DLL <span class="o">=</span><span class="si">$(</span>FREETYPE_LIB_PATH<span class="si">)</span>/freetype6.dll
  
-&lt;span class=&quot;nv&quot;&gt;ZLIB1_DLL&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;$(&lt;/span&gt;FREETYPE_LIB_PATH&lt;span class=&quot;k&quot;&gt;)&lt;/span&gt;/zlib1.dll&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+ZLIB1_DLL <span class="o">=</span> <span class="si">$(</span>FREETYPE_LIB_PATH<span class="si">)</span>/zlib1.dll</code></pre></figure>
 
-&lt;p&gt;&lt;strong&gt;第72行下加入：&lt;/strong&gt;&lt;/p&gt;
+<p><strong>第72行下加入：</strong></p>
 
-&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-sh&quot; data-lang=&quot;sh&quot;&gt;&lt;span class=&quot;k&quot;&gt;$(&lt;/span&gt;CP&lt;span class=&quot;k&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;$(&lt;/span&gt;ZLIB1_DLL&lt;span class=&quot;k&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;$(&lt;/span&gt;@D&lt;span class=&quot;k&quot;&gt;)&lt;/span&gt;/&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+<figure class="highlight"><pre><code class="language-sh" data-lang="sh"><span class="si">$(</span>CP<span class="si">)</span> <span class="si">$(</span>ZLIB1_DLL<span class="si">)</span> <span class="si">$(</span>@D<span class="si">)</span>/</code></pre></figure>
 
-&lt;p&gt;&lt;strong&gt;文件：jdk/src/share/classes/sun/font/FontManagerNativeLibrary.java&lt;/strong&gt;&lt;/p&gt;
+<p><strong>文件：jdk/src/share/classes/sun/font/FontManagerNativeLibrary.java</strong></p>
 
-&lt;p&gt;&lt;strong&gt;第59行：&lt;/strong&gt;&lt;/p&gt;
+<p><strong>第59行：</strong></p>
 
-&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-java&quot; data-lang=&quot;java&quot;&gt;&lt;span class=&quot;n&quot;&gt;System&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;loadLibrary&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&amp;quot;freetype&amp;quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;);&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+<figure class="highlight"><pre><code class="language-java" data-lang="java"><span class="nc">System</span><span class="o">.</span><span class="na">loadLibrary</span><span class="o">(</span><span class="s">"freetype"</span><span class="o">);</span></code></pre></figure>
 
-&lt;p&gt;改为：&lt;/p&gt;
+<p>改为：</p>
 
-&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-java&quot; data-lang=&quot;java&quot;&gt;&lt;span class=&quot;n&quot;&gt;System&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;loadLibrary&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&amp;quot;freetype6&amp;quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;);&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+<figure class="highlight"><pre><code class="language-java" data-lang="java"><span class="nc">System</span><span class="o">.</span><span class="na">loadLibrary</span><span class="o">(</span><span class="s">"freetype6"</span><span class="o">);</span></code></pre></figure>
 
-&lt;p&gt;OpenJDK的部分java文件注释是中文的。javac却指定了ascii编码方式（添加了参数-encoding ascii）。遇到包含中文的java文件，javac会报错。因此需要将-encoding编译选项去掉。&lt;/p&gt;
+<p>OpenJDK的部分java文件注释是中文的。javac却指定了ascii编码方式（添加了参数-encoding ascii）。遇到包含中文的java文件，javac会报错。因此需要将-encoding编译选项去掉。</p>
 
-&lt;p&gt;&lt;strong&gt;文件：/corba/make/common/shared/Defs-java.gmk&lt;/strong&gt;&lt;/p&gt;
+<p><strong>文件：/corba/make/common/shared/Defs-java.gmk</strong></p>
 
-&lt;p&gt;&lt;strong&gt;第133行：&lt;/strong&gt;&lt;/p&gt;
+<p><strong>第133行：</strong></p>
 
-&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-sh&quot; data-lang=&quot;sh&quot;&gt;JAVACFLAGS +&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; -encoding ascii&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+<figure class="highlight"><pre><code class="language-sh" data-lang="sh">JAVACFLAGS +<span class="o">=</span> <span class="nt">-encoding</span> ascii</code></pre></figure>
 
-&lt;p&gt;改为：&lt;/p&gt;
+<p>改为：</p>
 
-&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-sh&quot; data-lang=&quot;sh&quot;&gt;&lt;span class=&quot;c&quot;&gt;# JAVACFLAGS  += -encoding ascii&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+<figure class="highlight"><pre><code class="language-sh" data-lang="sh"><span class="c"># JAVACFLAGS  += -encoding ascii</span></code></pre></figure>
 
-&lt;p&gt;&lt;strong&gt;第194行：&lt;/strong&gt;&lt;/p&gt;
+<p><strong>第194行：</strong></p>
 
-&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-sh&quot; data-lang=&quot;sh&quot;&gt;BOOT_JAVACFLAGS  +&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; -encoding ascii -source&lt;span class=&quot;k&quot;&gt;$(&lt;/span&gt;BOOT_SOURCE_LANGUAGE_VERSION&lt;span class=&quot;k&quot;&gt;)&lt;/span&gt; -target &lt;span class=&quot;k&quot;&gt;$(&lt;/span&gt;BOOT_TARGET_CLASS_VERSION&lt;span class=&quot;k&quot;&gt;)&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+<figure class="highlight"><pre><code class="language-sh" data-lang="sh"> 
+BOOT_JAVACFLAGS  +<span class="o">=</span> <span class="nt">-encoding</span> ascii <span class="nt">-source</span><span class="si">$(</span>BOOT_SOURCE_LANGUAGE_VERSION<span class="si">)</span> <span class="nt">-target</span> <span class="si">$(</span>BOOT_TARGET_CLASS_VERSION<span class="si">)</span></code></pre></figure>
 
-&lt;p&gt;改为：&lt;/p&gt;
+<p>改为：</p>
 
-&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-sh&quot; data-lang=&quot;sh&quot;&gt;BOOT_JAVACFLAGS +&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; -source &lt;span class=&quot;k&quot;&gt;$(&lt;/span&gt;BOOT_SOURCE_LANGUAGE_VERSION&lt;span class=&quot;k&quot;&gt;)&lt;/span&gt;-target &lt;span class=&quot;k&quot;&gt;$(&lt;/span&gt;BOOT_TARGET_CLASS_VERSION&lt;span class=&quot;k&quot;&gt;)&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+<figure class="highlight"><pre><code class="language-sh" data-lang="sh">BOOT_JAVACFLAGS +<span class="o">=</span> <span class="nt">-source</span> <span class="si">$(</span>BOOT_SOURCE_LANGUAGE_VERSION<span class="si">)</span><span class="nt">-target</span> <span class="si">$(</span>BOOT_TARGET_CLASS_VERSION<span class="si">)</span></code></pre></figure>
 
-&lt;p&gt;&lt;strong&gt;文件：/jdk/make/common/shared/Defs-java.gmk&lt;/strong&gt;&lt;/p&gt;
+<p><strong>文件：/jdk/make/common/shared/Defs-java.gmk</strong></p>
 
-&lt;p&gt;&lt;strong&gt;第134行：&lt;/strong&gt;&lt;/p&gt;
+<p><strong>第134行：</strong></p>
 
-&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-sh&quot; data-lang=&quot;sh&quot;&gt;JAVACFLAGS +&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; -encoding ascii&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+<figure class="highlight"><pre><code class="language-sh" data-lang="sh">JAVACFLAGS +<span class="o">=</span> <span class="nt">-encoding</span> ascii</code></pre></figure>
 
-&lt;p&gt;改为：&lt;/p&gt;
+<p>改为：</p>
 
-&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-sh&quot; data-lang=&quot;sh&quot;&gt;&lt;span class=&quot;c&quot;&gt;# JAVACFLAGS  += -encoding ascii&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+<figure class="highlight"><pre><code class="language-sh" data-lang="sh"> 
+<span class="c"># JAVACFLAGS  += -encoding ascii</span></code></pre></figure>
 
-&lt;p&gt;&lt;strong&gt;第212行：&lt;/strong&gt;&lt;/p&gt;
+<p><strong>第212行：</strong></p>
 
-&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-sh&quot; data-lang=&quot;sh&quot;&gt;BOOT_JAVACFLAGS  +&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; -encoding ascii -source&lt;span class=&quot;k&quot;&gt;$(&lt;/span&gt;BOOT_SOURCE_LANGUAGE_VERSION&lt;span class=&quot;k&quot;&gt;)&lt;/span&gt; -target &lt;span class=&quot;k&quot;&gt;$(&lt;/span&gt;BOOT_TARGET_CLASS_VERSION&lt;span class=&quot;k&quot;&gt;)&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+<figure class="highlight"><pre><code class="language-sh" data-lang="sh">BOOT_JAVACFLAGS  +<span class="o">=</span> <span class="nt">-encoding</span> ascii <span class="nt">-source</span><span class="si">$(</span>BOOT_SOURCE_LANGUAGE_VERSION<span class="si">)</span> <span class="nt">-target</span> <span class="si">$(</span>BOOT_TARGET_CLASS_VERSION<span class="si">)</span></code></pre></figure>
 
-&lt;p&gt;改为：&lt;/p&gt;
+<p>改为：</p>
 
-&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-sh&quot; data-lang=&quot;sh&quot;&gt;BOOT_JAVACFLAGS +&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; -source&lt;span class=&quot;k&quot;&gt;$(&lt;/span&gt;BOOT_SOURCE_LANGUAGE_VERSION&lt;span class=&quot;k&quot;&gt;)&lt;/span&gt; -target &lt;span class=&quot;k&quot;&gt;$(&lt;/span&gt;BOOT_TARGET_CLASS_VERSION&lt;span class=&quot;k&quot;&gt;)&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+<figure class="highlight"><pre><code class="language-sh" data-lang="sh">BOOT_JAVACFLAGS +<span class="o">=</span> <span class="nt">-source</span><span class="si">$(</span>BOOT_SOURCE_LANGUAGE_VERSION<span class="si">)</span> <span class="nt">-target</span> <span class="si">$(</span>BOOT_TARGET_CLASS_VERSION<span class="si">)</span></code></pre></figure>
 
-&lt;p&gt;&lt;strong&gt;文件：/hotspot/make/windows/makefiles/rules.make&lt;/strong&gt;&lt;/p&gt;
+<p><strong>文件：/hotspot/make/windows/makefiles/rules.make</strong></p>
 
-&lt;p&gt;&lt;strong&gt;第48行：&lt;/strong&gt;&lt;/p&gt;
+<p><strong>第48行：</strong></p>
 
-&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-sh&quot; data-lang=&quot;sh&quot;&gt;&lt;span class=&quot;nv&quot;&gt;JAVAC_FLAGS&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;-g -encoding ascii&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+<figure class="highlight"><pre><code class="language-sh" data-lang="sh"><span class="nv">JAVAC_FLAGS</span><span class="o">=</span><span class="nt">-g</span> <span class="nt">-encoding</span> ascii</code></pre></figure>
 
-&lt;p&gt;改为：&lt;/p&gt;
+<p>改为：</p>
 
-&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-sh&quot; data-lang=&quot;sh&quot;&gt;&lt;span class=&quot;nv&quot;&gt;JAVAC_FLAGS&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;-g&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+<figure class="highlight"><pre><code class="language-sh" data-lang="sh"><span class="nv">JAVAC_FLAGS</span><span class="o">=</span><span class="nt">-g</span></code></pre></figure>
 
-&lt;p&gt;OpenJDK启用了VC的“将警告视为错误”（warnings as errors）选项。如果链接器生成警告，/WX 将不会生成任何输出文件。&lt;/p&gt;
+<p>OpenJDK启用了VC的“将警告视为错误”（warnings as errors）选项。如果链接器生成警告，/WX 将不会生成任何输出文件。</p>
 
-&lt;p&gt;&lt;strong&gt;文件：/hotspot/make/windows/makefiles/compile.make&lt;/strong&gt;&lt;/p&gt;
+<p><strong>文件：/hotspot/make/windows/makefiles/compile.make</strong></p>
 
-&lt;p&gt;&lt;strong&gt;第53行：&lt;/strong&gt;&lt;/p&gt;
+<p><strong>第53行：</strong></p>
 
-&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-sh&quot; data-lang=&quot;sh&quot;&gt;&lt;span class=&quot;nv&quot;&gt;CPP_FLAGS&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;/nologo /W3 /WX&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+<figure class="highlight"><pre><code class="language-sh" data-lang="sh"><span class="nv">CPP_FLAGS</span><span class="o">=</span>/nologo /W3 /WX</code></pre></figure>
 
-&lt;p&gt;改为：&lt;/p&gt;
+<p>改为：</p>
 
-&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-sh&quot; data-lang=&quot;sh&quot;&gt;&lt;span class=&quot;nv&quot;&gt;CPP_FLAGS&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;/nologo /W3 /WX-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+<figure class="highlight"><pre><code class="language-sh" data-lang="sh"> 
+<span class="nv">CPP_FLAGS</span><span class="o">=</span>/nologo /W3 /WX-</code></pre></figure>
 
-&lt;p&gt;&lt;strong&gt;文件：/hotspot/src/share/tools/hsdis/Makefile&lt;/strong&gt;&lt;/p&gt;
+<p><strong>文件：/hotspot/src/share/tools/hsdis/Makefile</strong></p>
 
-&lt;p&gt;&lt;strong&gt;第92行：&lt;/strong&gt;&lt;/p&gt;
+<p><strong>第92行：</strong></p>
 
-&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-sh&quot; data-lang=&quot;sh&quot;&gt;CFLAGS        +&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; /nologo /MD /W3 /WX /O2 /Fo&lt;span class=&quot;k&quot;&gt;$(&lt;/span&gt;@:.dll&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;.obj&lt;span class=&quot;k&quot;&gt;)&lt;/span&gt; /Gi-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+<figure class="highlight"><pre><code class="language-sh" data-lang="sh">CFLAGS        +<span class="o">=</span> /nologo /MD /W3 /WX /O2 /Fo<span class="si">$(</span>@:.dll<span class="o">=</span>.obj<span class="si">)</span> /Gi-</code></pre></figure>
 
-&lt;p&gt;改为：&lt;/p&gt;
+<p>改为：</p>
 
-&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-sh&quot; data-lang=&quot;sh&quot;&gt;CFLAGS        +&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; /nologo /MD /W3 /WX- /O2 /Fo&lt;span class=&quot;k&quot;&gt;$(&lt;/span&gt;@:.dll&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;.obj&lt;span class=&quot;k&quot;&gt;)&lt;/span&gt; /Gi-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+<figure class="highlight"><pre><code class="language-sh" data-lang="sh">CFLAGS        +<span class="o">=</span> /nologo /MD /W3 /WX- /O2 /Fo<span class="si">$(</span>@:.dll<span class="o">=</span>.obj<span class="si">)</span> /Gi-</code></pre></figure>
 
-&lt;p&gt;&lt;strong&gt;文件：/hotspot/make/windows/get_msc_ver.sh以及/jdk/make/common/shared/Compiler-msvc.gmk&lt;/strong&gt;&lt;/p&gt;
+<p><strong>文件：/hotspot/make/windows/get_msc_ver.sh以及/jdk/make/common/shared/Compiler-msvc.gmk</strong></p>
 
-&lt;p&gt;由于get_msc_ver.sh脚本文件是根据cl.exe的输出信息来判断编译器的版本的，而这个脚本只考虑了输出信息为英文的情况，所以本文开头强烈建议使用英文版的系统以及VS进行编译。如果你使用中文系统，那么有两个选择，一是将系统的区域和语言设置改为英文；二是直接将MSC_VER_RAW和CC_VER两个变量的值写入这两个文件（当然前提是你确保使用的编译器版本正确）。第二种方法我没有尝试成功，最后在虚拟机中安装了英文系统才编译通过。&lt;/p&gt;
+<p>由于get_msc_ver.sh脚本文件是根据cl.exe的输出信息来判断编译器的版本的，而这个脚本只考虑了输出信息为英文的情况，所以本文开头强烈建议使用英文版的系统以及VS进行编译。如果你使用中文系统，那么有两个选择，一是将系统的区域和语言设置改为英文；二是直接将MSC_VER_RAW和CC_VER两个变量的值写入这两个文件（当然前提是你确保使用的编译器版本正确）。第二种方法我没有尝试成功，最后在虚拟机中安装了英文系统才编译通过。</p>
 
-&lt;p&gt;另外编译过程中如果出现COMPILER_VERSION没有设置的提示，那么可以直接将COMPILER_VERSION = VS2010写入Compiler-msvc.gmk。&lt;/p&gt;
+<p>另外编译过程中如果出现COMPILER_VERSION没有设置的提示，那么可以直接将COMPILER_VERSION = VS2010写入Compiler-msvc.gmk。</p>
 
-&lt;p&gt;(10) 下面就可以进入openjdk目录进行编译了。&lt;/p&gt;
+<p>(10) 下面就可以进入openjdk目录进行编译了。</p>
 
-&lt;p&gt;首先输入bash进入cygwin环境，然后输入make sanity进行环境变量检查，如果回显输出make sanity pass就可以继续了，如果出错那么需要回头检查一下之前的设置是否正确。最后输入make进行编译即可。当然还有可能出错，那就要仔细查看错误输出再尝试解决了。&lt;/p&gt;
+<p>首先输入bash进入cygwin环境，然后输入make sanity进行环境变量检查，如果回显输出make sanity pass就可以继续了，如果出错那么需要回头检查一下之前的设置是否正确。最后输入make进行编译即可。当然还有可能出错，那就要仔细查看错误输出再尝试解决了。</p>
 
-&lt;p&gt;我的机器是i5 3470 + 16G，在虚拟机中分配了1G的RAM（如果你的RAM小于512M，编译的时候工具会提醒你也许会很耗时），总共用了半个小时多一点编译完成。&lt;/p&gt;
+<p>我的机器是i5 3470 + 16G，在虚拟机中分配了1G的RAM（如果你的RAM小于512M，编译的时候工具会提醒你也许会很耗时），总共用了半个小时多一点编译完成。</p>
 
-&lt;p&gt;-EOF-&lt;/p&gt;
-
-    &lt;p&gt;&lt;a href=&quot;/compile-jdk7-under-windows/&quot;&gt;Windows下编译OpenJDK7 笔记&lt;/a&gt; was originally published by Insomnia at &lt;a href=&quot;&quot;&gt;零時寝子&lt;/a&gt; on November 19, 2012.&lt;/p&gt;
-  </content>
-</entry>
-
-</feed>
+<p>-EOF-</p>]]></content><author><name></name></author><category term="openjdk" /><category term="compile" /><category term="windows" /><category term="make" /><category term="cygwin" /><summary type="html"><![CDATA[Windows下编译OpenJDK7 笔记]]></summary></entry></feed>

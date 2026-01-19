@@ -1,0 +1,25 @@
+navbar_entries:
+  - title: about
+    url: about
+
+  - title: blog
+    url: blog
+
+  - title: github
+    url: https://github.com/insomniacdoll
+
+project_entries:
+  []
+
+old_project_entries:
+  []
+
+footer_entries:
+  - title: github
+    url: https://github.com/insomniacdoll
+
+  - title: feed
+    url: feed.xml
+
+misc_entries:
+  []

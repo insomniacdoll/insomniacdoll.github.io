@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="4.3.2">Jekyll</generator><link href="http://localhost:4000/feed.xml" rel="self" type="application/atom+xml" /><link href="http://localhost:4000/" rel="alternate" type="text/html" /><updated>2023-07-19T15:10:45+08:00</updated><id>http://localhost:4000/feed.xml</id><title type="html">零時寝子</title><subtitle>Focus on Bigdata Engineering, AI and Data Mining </subtitle><entry><title type="html">使用osquery进行系统监控和系统数据收集（1）</title><link href="http://localhost:4000/2015/05/28/use-osquery-to-monitor-and-collect-os-data.html" rel="alternate" type="text/html" title="使用osquery进行系统监控和系统数据收集（1）" /><published>2015-05-28T00:00:00+08:00</published><updated>2015-05-28T00:00:00+08:00</updated><id>http://localhost:4000/2015/05/28/use-osquery-to-monitor-and-collect-os-data</id><content type="html" xml:base="http://localhost:4000/2015/05/28/use-osquery-to-monitor-and-collect-os-data.html"><![CDATA[<h3 id="0-前言">0. 前言</h3>
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="4.4.1">Jekyll</generator><link href="https://insomniacdoll.github.io/feed.xml" rel="self" type="application/atom+xml" /><link href="https://insomniacdoll.github.io/" rel="alternate" type="text/html" /><updated>2026-01-19T17:45:43+08:00</updated><id>https://insomniacdoll.github.io/feed.xml</id><title type="html">零時寝子</title><subtitle>Focus on Bigdata Engineering, AI and Data Mining </subtitle><author><name>insomniacdoll</name></author><entry><title type="html">使用osquery进行系统监控和系统数据收集</title><link href="https://insomniacdoll.github.io/use-osquery-to-monitor-and-collect-os-data" rel="alternate" type="text/html" title="使用osquery进行系统监控和系统数据收集" /><published>2015-05-28T00:00:00+08:00</published><updated>2015-05-28T00:00:00+08:00</updated><id>https://insomniacdoll.github.io/use-osquery-to-monitor-and-collect-os-data</id><content type="html" xml:base="https://insomniacdoll.github.io/use-osquery-to-monitor-and-collect-os-data"><![CDATA[<h3 id="0-前言">0. 前言</h3>
 
 <p>系统的实时监控系统，在技术上的选择并不少，比如商业的<a href="http://newrelic.com/">New Relic</a>，或者开源的<a href="">collectd</a>配合<a href="http://influxdb.com/">InfluxDB</a>+<a href="http://grafana.org/">Grafana</a>，都可以快捷迅速地解决需求。<br />
 本文介绍另外一种可能性，即osquery，它是facebook开源的一个项目，它将操作系统的各类资源看作一个RDBMS，允许开发者或者运维人员使用类SQL语言去查询系统数据。每一类系统资源都被抽象成一个有名数据库表，比如进程、已加载的内核模块、活动的网络链接、浏览器插件甚至硬件设备事件。<br />
@@ -50,14 +50,14 @@ make <span class="nb">install</span></code></pre></figure>
 <span class="k">SELECT</span> <span class="o">*</span> <span class="k">FROM</span> <span class="n">users</span><span class="p">;</span>  </code></pre></figure>
 
 <p>运行结果：<br />
-<img src="http://localhost:4000/images/osquery/users.PNG" alt="Users Image" /><br />
+<img src="https://insomniacdoll.github.io/images/osquery/users.PNG" alt="Users Image" /><br />
 列出所有进程：</p>
 
 <figure class="highlight"><pre><code class="language-sql" data-lang="sql"> 
 <span class="k">SELECT</span>  <span class="n">pid</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">cmdline</span> <span class="k">FROM</span> <span class="n">processes</span><span class="p">;</span>  </code></pre></figure>
 
 <p>运行结果：<br />
-<img src="http://localhost:4000/images/osquery/process.PNG" alt="Process Image" /><br />
+<img src="https://insomniacdoll.github.io/images/osquery/process.PNG" alt="Process Image" /><br />
 取得当前的进程名、PID以及该进程使用的端口：</p>
 
 <figure class="highlight"><pre><code class="language-sql" data-lang="sql"> 
@@ -88,7 +88,7 @@ make <span class="nb">install</span></code></pre></figure>
     <span class="n">process</span><span class="p">.</span><span class="n">pid</span><span class="p">;</span></code></pre></figure>
 
 <p>运行结果：<br />
-<img src="http://localhost:4000/images/osquery/files.PNG" alt="Files Image" /><br />
+<img src="https://insomniacdoll.github.io/images/osquery/files.PNG" alt="Files Image" /><br />
 获取到可能异常的ARP请求（广播的mac地址数量大于1）：</p>
 
 <figure class="highlight"><pre><code class="language-sql" data-lang="sql"> 
@@ -115,7 +115,7 @@ make <span class="nb">install</span></code></pre></figure>
 [3] http://osquery.readthedocs.org/en/stable/development/building/<br />
 [4] https://thrift.apache.org/</p>
 
-<p>-EOF-</p>]]></content><author><name></name></author><category term="os" /><category term="kernel" /><category term="osquery" /><category term="thrift" /><summary type="html"><![CDATA[使用osquery进行系统监控和系统数据收集（1）]]></summary></entry><entry><title type="html">在My Cloud EX2上安装aria2和yaaw</title><link href="http://localhost:4000/2015/03/20/install-aria2-on-my-cloud-ex2.html" rel="alternate" type="text/html" title="在My Cloud EX2上安装aria2和yaaw" /><published>2015-03-20T00:00:00+08:00</published><updated>2015-03-20T00:00:00+08:00</updated><id>http://localhost:4000/2015/03/20/install-aria2-on-my-cloud-ex2</id><content type="html" xml:base="http://localhost:4000/2015/03/20/install-aria2-on-my-cloud-ex2.html"><![CDATA[<h3 id="0-前言">0. 前言</h3>
+<p>-EOF-</p>]]></content><author><name>insomniacdoll</name></author><category term="os" /><category term="kernel" /><category term="osquery" /><category term="thrift" /><summary type="html"><![CDATA[使用osquery进行系统监控和系统数据收集]]></summary></entry><entry><title type="html">在My Cloud EX2上安装aria2和yaaw</title><link href="https://insomniacdoll.github.io/install-aria2-on-my-cloud-ex2" rel="alternate" type="text/html" title="在My Cloud EX2上安装aria2和yaaw" /><published>2015-03-20T00:00:00+08:00</published><updated>2015-03-20T00:00:00+08:00</updated><id>https://insomniacdoll.github.io/install-aria2-on-my-cloud-ex2</id><content type="html" xml:base="https://insomniacdoll.github.io/install-aria2-on-my-cloud-ex2"><![CDATA[<h3 id="0-前言">0. 前言</h3>
 
 <p>之前一直在使用My Book Live，可以方便地使用自带的Debian系统进行应用扩展。配合最常用的aria2和yaaw，可以方便地进行百度网盘、115网盘、迅雷离线等网络存储的脱机下载。</p>
 
@@ -369,7 +369,7 @@ log-level<span class="o">=</span>warn <span class="c">#日志级别</span></code
 
 <p>此外，【http://NAS的IP/yaaw】这个地址可以查看aria2的运行情况，同时也可以使用Web的方式来使用Aria2，当然下载都是My Cloud EX2的任务了。</p>
 
-<p>-EOF-</p>]]></content><author><name></name></author><category term="嵌入式" /><category term="kernel" /><category term="my cloud" /><category term="yaaw" /><category term="aria2" /><summary type="html"><![CDATA[在My Cloud EX2上安装aria2和yaaw]]></summary></entry><entry><title type="html">Windows 8/8.1 上的MotionJoy和DS3配置</title><link href="http://localhost:4000/2015/02/20/motionjoy-and-ds3-config-on-windows-8.html" rel="alternate" type="text/html" title="Windows 8/8.1 上的MotionJoy和DS3配置" /><published>2015-02-20T00:00:00+08:00</published><updated>2015-02-20T00:00:00+08:00</updated><id>http://localhost:4000/2015/02/20/motionjoy-and-ds3-config-on-windows-8</id><content type="html" xml:base="http://localhost:4000/2015/02/20/motionjoy-and-ds3-config-on-windows-8.html"><![CDATA[<p>最近更新了Windows 8.1系统，原来使用正常的MotionJoy没法正常安装了，google了一圈解决办法，记录在这里。<br />
+<p>-EOF-</p>]]></content><author><name>insomniacdoll</name></author><category term="嵌入式" /><category term="kernel" /><category term="my cloud" /><category term="yaaw" /><category term="aria2" /><summary type="html"><![CDATA[在My Cloud EX2上安装aria2和yaaw]]></summary></entry><entry><title type="html">Windows 8/8.1 上的MotionJoy和DS3配置</title><link href="https://insomniacdoll.github.io/motionjoy-and-ds3-config-on-windows-8" rel="alternate" type="text/html" title="Windows 8/8.1 上的MotionJoy和DS3配置" /><published>2015-02-20T00:00:00+08:00</published><updated>2015-02-20T00:00:00+08:00</updated><id>https://insomniacdoll.github.io/motionjoy-and-ds3-config-on-windows-8</id><content type="html" xml:base="https://insomniacdoll.github.io/motionjoy-and-ds3-config-on-windows-8"><![CDATA[<p>最近更新了Windows 8.1系统，原来使用正常的MotionJoy没法正常安装了，google了一圈解决办法，记录在这里。<br />
 首先还是要到MotionJoy的官网上去下载最新版本的安装包，然后安装：</p>
 
 <figure class="highlight"><pre><code class="language-sh" data-lang="sh">http://motioninjoy.en.uptodown.com/  </code></pre></figure>
@@ -392,7 +392,7 @@ bcdedit /set testsigning on  </code></pre></figure>
 <p>最后把验证再重新开启：</p>
 
 <figure class="highlight"><pre><code class="language-sh" data-lang="sh">bcdedit /set testsigning off  
-bcdedit <span class="nt">-set</span> TESTSIGNING OFF  </code></pre></figure>]]></content><author><name></name></author><category term="motionjoy" /><category term="ps3" /><category term="ds3" /><summary type="html"><![CDATA[Windows 8/8.1 上的MotionJoy和DS3配置]]></summary></entry><entry><title type="html">cubietruck安装Cubieez/Lubuntu笔记</title><link href="http://localhost:4000/2015/01/01/install-cubieez-lubuntu-on-cubietruck.html" rel="alternate" type="text/html" title="cubietruck安装Cubieez/Lubuntu笔记" /><published>2015-01-01T00:00:00+08:00</published><updated>2015-01-01T00:00:00+08:00</updated><id>http://localhost:4000/2015/01/01/install-cubieez-lubuntu-on-cubietruck</id><content type="html" xml:base="http://localhost:4000/2015/01/01/install-cubieez-lubuntu-on-cubietruck.html"><![CDATA[<p>工具：</p>
+bcdedit <span class="nt">-set</span> TESTSIGNING OFF  </code></pre></figure>]]></content><author><name>insomniacdoll</name></author><category term="motionjoy" /><category term="ps3" /><category term="ds3" /><summary type="html"><![CDATA[Windows 8/8.1 上的MotionJoy和DS3配置]]></summary></entry><entry><title type="html">cubietruck安装Cubieez/Lubuntu笔记</title><link href="https://insomniacdoll.github.io/install-cubieez-lubuntu-on-cubietruck" rel="alternate" type="text/html" title="cubietruck安装Cubieez/Lubuntu笔记" /><published>2015-01-01T00:00:00+08:00</published><updated>2015-01-01T00:00:00+08:00</updated><id>https://insomniacdoll.github.io/install-cubieez-lubuntu-on-cubietruck</id><content type="html" xml:base="https://insomniacdoll.github.io/install-cubieez-lubuntu-on-cubietruck"><![CDATA[<p>工具：</p>
 
 <figure class="highlight"><pre><code class="language-sh" data-lang="sh">PhoneixSuite<span class="o">(</span>Windows<span class="o">)</span>
 SecureCRT</code></pre></figure>
@@ -440,7 +440,7 @@ SecureCRT</code></pre></figure>
 
 <p>然后把output目录下的modules替换到开发板的/lib/modules下，/arch/arm/boot/uImage替换到开发板/boot目录下，内核就升级完成了，重启即可。</p>
 
-<p>-EOF-</p>]]></content><author><name></name></author><category term="嵌入式" /><category term="ubuntu" /><category term="cubietruck" /><category term="cubieez" /><summary type="html"><![CDATA[cubietruck安装Cubieez/Lubuntu笔记]]></summary></entry><entry><title type="html">Felix入门与实践</title><link href="http://localhost:4000/2013/01/30/felix-tutorial.html" rel="alternate" type="text/html" title="Felix入门与实践" /><published>2013-01-30T00:00:00+08:00</published><updated>2013-01-30T00:00:00+08:00</updated><id>http://localhost:4000/2013/01/30/felix-tutorial</id><content type="html" xml:base="http://localhost:4000/2013/01/30/felix-tutorial.html"><![CDATA[<p>首先，我假设你已经了解OSGi相关的一些概念，如果没有，可以看看官方的文档。</p>
+<p>-EOF-</p>]]></content><author><name>insomniacdoll</name></author><category term="嵌入式" /><category term="ubuntu" /><category term="cubietruck" /><category term="cubieez" /><summary type="html"><![CDATA[cubietruck安装Cubieez/Lubuntu笔记]]></summary></entry><entry><title type="html">Felix入门与实践</title><link href="https://insomniacdoll.github.io/felix-tutorial" rel="alternate" type="text/html" title="Felix入门与实践" /><published>2013-01-30T00:00:00+08:00</published><updated>2013-01-30T00:00:00+08:00</updated><id>https://insomniacdoll.github.io/felix-tutorial</id><content type="html" xml:base="https://insomniacdoll.github.io/felix-tutorial"><![CDATA[<p>首先，我假设你已经了解OSGi相关的一些概念，如果没有，可以看看官方的文档。</p>
 
 <p>我们从创建一个监听OSGi Service事件的bundle开始。这个小例子并不会包含太多的东西，只是打印出注册以及未注册的Service的详细信息而已。下一篇我才会开始介绍实现了Service的bundle，这次只是通过一个范例来加深对于创建bundle基础知识的理解。</p>
 
@@ -540,7 +540,7 @@ Import-Package: org.osgi.framework</code></pre></figure>
 
 <p>上面的命令会自动安装并start这个bundle。当然我们也可以手动安装并且运行。Felix的Shell有install和start两个命令，分别运行一下就OK。另外stop命令可以stop指定的bundle，而shutdown则是关闭整个Felix环境。</p>
 
-<p>-EOF-</p>]]></content><author><name></name></author><category term="felix" /><category term="OSGi" /><category term="java" /><category term="service" /><summary type="html"><![CDATA[Felix入门与实践]]></summary></entry><entry><title type="html">Windows下编译OpenJDK7 笔记</title><link href="http://localhost:4000/2012/11/19/compile-jdk7-under-windows.html" rel="alternate" type="text/html" title="Windows下编译OpenJDK7 笔记" /><published>2012-11-19T00:00:00+08:00</published><updated>2012-11-19T00:00:00+08:00</updated><id>http://localhost:4000/2012/11/19/compile-jdk7-under-windows</id><content type="html" xml:base="http://localhost:4000/2012/11/19/compile-jdk7-under-windows.html"><![CDATA[<h3 id="0-系统需求">0. 系统需求</h3>
+<p>-EOF-</p>]]></content><author><name>insomniacdoll</name></author><category term="felix" /><category term="OSGi" /><category term="java" /><category term="service" /><summary type="html"><![CDATA[Felix入门与实践]]></summary></entry><entry><title type="html">Windows下编译OpenJDK7 笔记</title><link href="https://insomniacdoll.github.io/compile-jdk7-under-windows" rel="alternate" type="text/html" title="Windows下编译OpenJDK7 笔记" /><published>2012-11-19T00:00:00+08:00</published><updated>2012-11-19T00:00:00+08:00</updated><id>https://insomniacdoll.github.io/compile-jdk7-under-windows</id><content type="html" xml:base="https://insomniacdoll.github.io/compile-jdk7-under-windows"><![CDATA[<h3 id="0-系统需求">0. 系统需求</h3>
 
 <p>Windows XP SP3 / Windows 7 （强烈推荐用英文版系统进行构建，原因后详）</p>
 
@@ -825,4 +825,4 @@ BOOT_JAVACFLAGS  +<span class="o">=</span> <span class="nt">-encoding</span> asc
 
 <p>我的机器是i5 3470 + 16G，在虚拟机中分配了1G的RAM（如果你的RAM小于512M，编译的时候工具会提醒你也许会很耗时），总共用了半个小时多一点编译完成。</p>
 
-<p>-EOF-</p>]]></content><author><name></name></author><category term="openjdk" /><category term="compile" /><category term="windows" /><category term="make" /><category term="cygwin" /><summary type="html"><![CDATA[Windows下编译OpenJDK7 笔记]]></summary></entry></feed>
+<p>-EOF-</p>]]></content><author><name>insomniacdoll</name></author><category term="openjdk" /><category term="compile" /><category term="windows" /><category term="make" /><category term="cygwin" /><summary type="html"><![CDATA[Windows下编译OpenJDK7 笔记]]></summary></entry></feed>

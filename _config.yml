@@ -36,8 +36,8 @@ twitter:
     card: summary_large_image
 
 # Moonwalk theme configuration
-# Pin the theme to keep builds reproducible with the existing plugin set.
-remote_theme: abhinavs/moonwalk@f1491c81fb60b13d79734d15eb798139928d1baf
+# Moonwalk 0.4.0; pin the revision so upstream changes do not alter builds.
+remote_theme: abhinavs/moonwalk@1f82b0deecdb901a6a967b6eeb8ad7b8dfcbbc8e
 
 theme_config:
   appearance: "auto" # can be "light", "dark" or "auto"
@@ -55,6 +55,13 @@ theme_config:
   show_misc_list: false # show generic vertical list for misc details, add _data/home.yml
   show_reading_time: true # show number of words and reading time in the blog posts
   show_tags: true # show tags in a blog posts
+  show_code_copy: true
+  show_progress_bar: true
+  show_back_to_top: true
+  show_post_nav: true
+  show_toc: true
+  show_footnote_tooltips: true
+  show_link_previews: true
   # options for "home" page
   home:
     title_projects: Portfolio
@@ -67,6 +74,20 @@ plugins:
   - jekyll-feed
   - jekyll-remote-theme
   - jekyll-soopr-seo-tag
+  - jekyll-sitemap
+  - jekyll-markdown-output
+  - jekyll-llms-output
+
+markdown_output:
+  collections: [posts]
+  pages: false
+
+llms_output:
+  index:
+    collections: [posts]
+  full:
+    collections: [posts]
+    respect_markdown_output: true
 
 highlighter: rouge
 
